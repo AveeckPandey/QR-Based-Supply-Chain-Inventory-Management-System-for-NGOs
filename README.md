@@ -238,7 +238,7 @@ git push origin feature/your-feature
 
 ## 📄 License
 
-MIT © [Your Name / Organization]
+MIT © [Aveeck Pandey]
 
 ---
 
