@@ -35,7 +35,7 @@ No more spreadsheets. No more manual errors. Just scan, dispatch, and go.
 
 | Sign In | Dashboard (Dark) | Dashboard (Light) |
 |--------|-----------------|-------------------|
-| ![Sign In](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/main/assets/images/WhatsApp%20Image%202026-04-15%20at%2023.14.34.jpeg?raw=true) | ![Dark Dashboard](screenshots/dashboard_dark.jpeg) | ![Light Dashboard](screenshots/dashboard_light.jpeg) |
+| ![Sign In](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/main/assets/images/WhatsApp%20Image%202026-04-15%20at%2023.14.34.jpeg?raw=true) | ![Dark Dashboard]([screenshots/dashboard_dark.jpeg](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/cdc1afcadf915edc9437aa738b11e8283588041a/assets/images/WhatsApp%20Image%202026-04-15%20at%2023.14.37.jpeg)) | ![Light Dashboard](screenshots/dashboard_light.jpeg) |
 
 | Manage Boxes | QR Print View | QR Scanner |
 |-------------|--------------|------------|
