@@ -32,16 +32,13 @@ No more spreadsheets. No more manual errors. Just scan, dispatch, and go.
 ---
 
 ## 📸 Screenshots
-
 | Sign In | Dashboard (Dark) | Dashboard (Light) |
 |--------|-----------------|-------------------|
-| ![Sign In](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/main/assets/images/WhatsApp%20Image%202026-04-15%20at%2023.14.34.jpeg?raw=true) | ![Dark Dashboard]([screenshots/dashboard_dark.jpeg](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/cdc1afcadf915edc9437aa738b11e8283588041a/assets/images/WhatsApp%20Image%202026-04-15%20at%2023.14.37.jpeg)) | ![Light Dashboard](screenshots/dashboard_light.jpeg) |
+| ![Sign In](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/5e9290d185e9ea0b5c38220b9460167650c8cba9/assets/SignIn%20page.jpeg?raw=true) | ![Dark Dashboard](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/5e9290d185e9ea0b5c38220b9460167650c8cba9/assets/Dasboard.jpeg?raw=true) | ![Light Dashboard](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/5e9290d185e9ea0b5c38220b9460167650c8cba9/assets/dashboard%20in%20light%20mode.jpeg?raw=true) |
 
 | Manage Boxes | QR Print View | QR Scanner |
 |-------------|--------------|------------|
-| ![Boxes](screenshots/manage_boxes.jpeg) | ![QR Print](screenshots/qr_print.jpeg) | ![Scanner](screenshots/scanner.jpeg) |
-
-> Add your actual screenshots to a `/screenshots` folder in the repo root.
+| ![Boxes](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/5e9290d185e9ea0b5c38220b9460167650c8cba9/assets/Manage%20Boxes.jpeg?raw=true) | ![QR Print](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/a0ea7fa782b66d2819f51b57df9695b5ac156c84/assets/QR%20code.jpeg?raw=true) | ![Scanner](https://github.com/AveeckPandey/QR-Based-Supply-Chain-Inventory-Management-System-for-NGOs/blob/a0ea7fa782b66d2819f51b57df9695b5ac156c84/assets/QR%20Scanner.jpeg?raw=true) |
 
 ---
 
