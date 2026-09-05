@@ -19,7 +19,7 @@ export default function Settings({ navigation }: { navigation: any }) {
   const { theme, themeName, brandPreset, toggleTheme, setBrandPreset } = useAppTheme();
   const { userData, isAdmin, canEdit } = useUser();
   const { t: tAll, tf, language, setLanguage } = useLanguage();
-  const { currency, setCurrencyCode } = useCurrency();
+  const { currency, setCurrencyCode, rates, isLiveRates } = useCurrency();
   const { simpleMode, setSimpleMode } = useSimpleMode();
   const t = tAll('settings');
   const tCommon = tAll('common');
@@ -188,7 +188,15 @@ export default function Settings({ navigation }: { navigation: any }) {
             </Modal>
           </View>
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>{t.currency || 'Currency'}</Text>
+            <View style={styles.currencyHeaderRow}>
+              <Text style={styles.fieldLabel}>{t.currency || 'Currency'}</Text>
+              <View style={styles.liveRateBadgeRow}>
+                <MaterialCommunityIcons name={isLiveRates ? 'wifi' : 'wifi-off'} size={13} color={isLiveRates ? '#10B981' : theme.muted} />
+                <Text style={[styles.liveRateText, { color: isLiveRates ? '#10B981' : theme.muted }]}>
+                  {isLiveRates ? t.liveRatesActive || 'Live Rates' : t.offlineRatesActive || 'Offline Rates'}
+                </Text>
+              </View>
+            </View>
             <Pressable
               onPress={() => setCurrencyMenuOpen(true)}
               accessibilityRole="button"
@@ -237,7 +245,14 @@ export default function Settings({ navigation }: { navigation: any }) {
                           <View style={[styles.currencySymbolBadge, { backgroundColor: currency.code === option.code ? theme.primary : theme.border + '40' }]}>
                             <Text style={[styles.currencySymbolText, { color: currency.code === option.code ? '#FFFFFF' : theme.text }]}>{option.symbol}</Text>
                           </View>
-                          <Text style={[styles.languageOptionText, { color: theme.text, fontWeight: currency.code === option.code ? '700' : '400' }]}>{option.label}</Text>
+                          <View style={styles.currencyOptionTextWrap}>
+                            <Text style={[styles.languageOptionText, { color: theme.text, fontWeight: currency.code === option.code ? '700' : '400' }]}>{option.label}</Text>
+                            {rates[option.code] ? (
+                              <Text style={[styles.currencyRatePreviewText, { color: theme.muted }]}>
+                                {tf('settings.ratePreview', { rate: rates[option.code]?.toFixed(2), code: option.code }) || `1 USD = ${rates[option.code]?.toFixed(2)} ${option.code}`}
+                              </Text>
+                            ) : null}
+                          </View>
                         </View>
                         {currency.code === option.code ? (
                           <MaterialCommunityIcons name="check-circle" size={20} color={theme.primary} />
@@ -471,6 +486,22 @@ function createStyles(theme) {
       marginBottom: spacing.md,
       paddingBottom: spacing.xs,
     },
+    currencyHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.xs,
+    },
+    liveRateBadgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    liveRateText: {
+      ...type.caption,
+      fontSize: 11,
+      fontWeight: '600',
+    },
     currencyBadgeRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -482,6 +513,14 @@ function createStyles(theme) {
       alignItems: 'center',
       gap: spacing.sm,
       flex: 1,
+    },
+    currencyOptionTextWrap: {
+      flex: 1,
+    },
+    currencyRatePreviewText: {
+      ...type.caption,
+      fontSize: 11,
+      marginTop: 1,
     },
     currencySymbolBadge: {
       width: 28,
