@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TextInput } from 'react-native-paper';
 import * as Haptics from 'expo-haptics';
@@ -24,6 +24,15 @@ import FadeInUp from '../../components/FadeInUp';
 import AmbientGlow from '../../components/AmbientGlow';
 import { layout, radius, spacing, type } from '../../theme/tokens';
 
+export type CustomDonorItem = {
+  id: string;
+  name: string;
+  category: 'meat_poultry' | 'dairy_eggs' | 'vegetables_fruit' | 'custom_grain' | 'other';
+  donatedKg: number;
+  gramPerServing: number;
+  isPerishable: boolean;
+};
+
 export default function RationCalculator({ navigation }) {
   const { theme } = useAppTheme();
   const { currentWarehouse } = useWarehouse();
@@ -38,6 +47,26 @@ export default function RationCalculator({ navigation }) {
   const [wasteMarginPctText, setWasteMarginPctText] = useState<string>('5');
   const [freshMeatDonationKgText, setFreshMeatDonationKgText] = useState<string>('');
 
+  // Dynamic Custom Donor / Ration items array (+)
+  const [customDonorItems, setCustomDonorItems] = useState<CustomDonorItem[]>([
+    {
+      id: 'default_chicken',
+      name: 'Fresh Chicken / Mutton Inflow',
+      category: 'meat_poultry',
+      donatedKg: 0,
+      gramPerServing: 100,
+      isPerishable: true,
+    },
+  ]);
+
+  // Modal State for adding custom commodity (+)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [customItemName, setCustomItemName] = useState('');
+  const [customCategory, setCustomCategory] = useState<CustomDonorItem['category']>('meat_poultry');
+  const [customDonatedKgText, setCustomDonatedKgText] = useState('');
+  const [customGramPerServingText, setCustomGramPerServingText] = useState('60');
+  const [customIsPerishable, setCustomIsPerishable] = useState(true);
+
   const region = useMemo<RegionPreset>(
     () => REGIONAL_RATION_PRESETS.find((r) => r.id === selectedRegionId) || REGIONAL_RATION_PRESETS[0],
     [selectedRegionId]
@@ -46,13 +75,13 @@ export default function RationCalculator({ navigation }) {
   const peopleCount = Number(peopleCountText) || 0;
   const durationDays = Number(durationDaysText) || 0;
   const wasteMargin = (Number(wasteMarginPctText) || 0) / 100;
-  const freshMeatKg = Number(freshMeatDonationKgText) || 0;
+  const freshMeatKg = (Number(freshMeatDonationKgText) || 0) + customDonorItems.reduce((acc, c) => acc + (c.isPerishable ? c.donatedKg : 0), 0);
 
   // Calculate meat offset
   const meatProteinOffsetKg = useMemo(() => calculateMeatProteinOffsetKg(freshMeatKg), [freshMeatKg]);
 
-  // Perform Calculations across items
-  const calculations = useMemo(() => {
+  // Perform Calculations across standard preset items
+  const presetCalculations = useMemo(() => {
     return region.staples.map((staple) => {
       const gramPerServing = calcMode === 'dry_ration' ? staple.fullReliefGramPerDay : staple.singleMealGram;
       const requiredKg = calculateFoodRequiredKg(peopleCount, gramPerServing, durationDays, wasteMargin);
@@ -66,6 +95,7 @@ export default function RationCalculator({ navigation }) {
 
       return {
         ...staple,
+        isCustom: false,
         gramPerServing,
         requiredKg,
         netRequiredKg,
@@ -75,14 +105,73 @@ export default function RationCalculator({ navigation }) {
     });
   }, [region, calcMode, peopleCount, durationDays, wasteMargin, meatProteinOffsetKg]);
 
+  // Calculations across dynamic custom items (+)
+  const customCalculations = useMemo(() => {
+    return customDonorItems
+      .filter((item) => item.donatedKg > 0 || item.gramPerServing > 0)
+      .map((item) => {
+        const requiredKg = calculateFoodRequiredKg(peopleCount, item.gramPerServing, durationDays, wasteMargin);
+        const netRequiredKg = Math.max(0, Number((requiredKg - item.donatedKg).toFixed(2)));
+        const cookedOutputKg = calculateCookedOutputKg(netRequiredKg, item.category === 'meat_poultry' ? 'chicken' : 'vegetables');
+
+        return {
+          id: item.id,
+          name: item.name,
+          unit: 'kg',
+          isCustom: true,
+          gramPerServing: item.gramPerServing,
+          donatedKg: item.donatedKg,
+          requiredKg,
+          netRequiredKg,
+          cookedOutputKg,
+          isPerishable: item.isPerishable,
+        };
+      });
+  }, [customDonorItems, peopleCount, durationDays, wasteMargin]);
+
+  const allCalculations = useMemo(() => [...presetCalculations, ...customCalculations], [presetCalculations, customCalculations]);
+
+  const handleAddCustomItemSubmit = () => {
+    if (!customItemName.trim()) {
+      snackbar.error('Please enter a name for the custom donor item');
+      return;
+    }
+
+    const newItem: CustomDonorItem = {
+      id: `custom_${Date.now()}`,
+      name: customItemName.trim(),
+      category: customCategory,
+      donatedKg: Number(customDonatedKgText) || 0,
+      gramPerServing: Number(customGramPerServingText) || 50,
+      isPerishable: customIsPerishable,
+    };
+
+    setCustomDonorItems((prev) => [...prev, newItem]);
+    setIsAddModalOpen(false);
+
+    // Reset Form
+    setCustomItemName('');
+    setCustomDonatedKgText('');
+    setCustomGramPerServingText('60');
+    setCustomIsPerishable(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    snackbar.success(`Added custom donor item: ${newItem.name}`);
+  };
+
+  const handleRemoveCustomItem = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setCustomDonorItems((prev) => prev.filter((i) => i.id !== id));
+  };
+
   const handleExportPO = async (format: 'csv' | 'pdf') => {
-    if (calculations.length === 0) return;
+    if (allCalculations.length === 0) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const poRows = calculations.map((c) => ({
+    const poRows = allCalculations.map((c) => ({
       Region: region.name,
       Mode: calcMode === 'dry_ration' ? 'Dry Ration' : 'Hot Kitchen',
       Commodity: c.name,
+      Type: c.isCustom ? 'Custom Donor Item (+)' : 'Standard Preset',
       Beneficiaries: peopleCount,
       Days: durationDays,
       GramPerServing: `${c.gramPerServing}g`,
@@ -90,7 +179,7 @@ export default function RationCalculator({ navigation }) {
       NetProcurementKg: c.netRequiredKg,
       CookedYieldKg: c.cookedOutputKg,
       WasteMargin: `${wasteMargin * 100}%`,
-      DonorMeatOffsetKg: meatProteinOffsetKg,
+      DonorProteinOffsetKg: meatProteinOffsetKg,
     }));
 
     try {
@@ -115,7 +204,7 @@ export default function RationCalculator({ navigation }) {
             <ScreenHeader
               eyebrow="HUMANITARIAN LOGISTICS"
               title="Ration & Supplier Calculator"
-              subtitle="WFP / Sphere Standard formulas with yield multipliers and donor inflow offsets."
+              subtitle="WFP / Sphere Standard formulas with yield multipliers and dynamic custom donor inflow offsets."
             />
           </FadeInUp>
 
@@ -262,34 +351,83 @@ export default function RationCalculator({ navigation }) {
             </SurfaceCard>
           </FadeInUp>
 
-          {/* Custom Donor Inflow (Fresh Meat / Unplanned Donated Items) */}
+          {/* Custom Donor Inflow Manager (+) */}
           <FadeInUp delay={160}>
             <SurfaceCard padding={spacing.lg}>
               <View style={styles.cardHeaderRow}>
-                <Text style={[styles.cardTitle, { color: theme.text }]}>3. Donated Inflow (+) (Fresh Meat / Surplus)</Text>
-                <MaterialCommunityIcons name="food-drumstick" size={20} color={theme.warning} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.cardTitle, { color: theme.text }]}>3. Custom Donor Inflow (+)</Text>
+                  <Text style={[styles.fieldHelper, { color: theme.muted }]}>
+                    Add unexpected donor items (e.g. Fresh Chicken, Mutton, Eggs, Milk Powder, Produce). Offsets dry pulses & flags perishable priority.
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setIsAddModalOpen(true);
+                  }}
+                  style={({ pressed }) => [
+                    styles.addCustomBtn,
+                    { backgroundColor: theme.primary },
+                    pressed && { opacity: 0.8 },
+                  ]}
+                >
+                  <MaterialCommunityIcons name="plus" size={18} color={theme.primaryText} />
+                  <Text style={[styles.addCustomBtnText, { color: theme.primaryText }]}>Add Item</Text>
+                </Pressable>
               </View>
-              <Text style={[styles.fieldHelper, { color: theme.muted }]}>
-                Enter unexpected donor items (e.g. Fresh Chicken / Mutton). The calculator automatically offsets pulse procurement and flags perishable dispatch priority.
-              </Text>
-              <TextInput
-                mode="outlined"
-                label="Fresh Chicken / Mutton Donation (kg)"
-                value={freshMeatDonationKgText}
-                onChangeText={(t) => setFreshMeatDonationKgText(t.replace(/[^0-9.]/g, ''))}
-                keyboardType="numeric"
-                style={styles.textInput}
-                outlineColor={theme.border}
-                activeOutlineColor={theme.primary}
-                textColor={theme.text}
-              />
+
+              {/* Direct Quick Meat Input */}
+              <View style={{ marginTop: spacing.xs }}>
+                <TextInput
+                  mode="outlined"
+                  label="Fresh Chicken / Mutton Donation (kg)"
+                  value={freshMeatDonationKgText}
+                  onChangeText={(t) => setFreshMeatDonationKgText(t.replace(/[^0-9.]/g, ''))}
+                  keyboardType="numeric"
+                  style={styles.textInput}
+                  outlineColor={theme.border}
+                  activeOutlineColor={theme.primary}
+                  textColor={theme.text}
+                />
+              </View>
+
+              {/* Render dynamic added custom donor items list */}
+              {customDonorItems.length > 0 ? (
+                <View style={styles.customItemsList}>
+                  {customDonorItems.map((item) => (
+                    <View key={item.id} style={[styles.customItemCard, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }]}>
+                      <View style={{ flex: 1 }}>
+                        <View style={styles.customItemTitleRow}>
+                          <Text style={[styles.customItemName, { color: theme.text }]}>{item.name}</Text>
+                          {item.isPerishable ? (
+                            <View style={[styles.badgePerishable, { backgroundColor: theme.warningSoft || 'rgba(251,191,36,0.14)' }]}>
+                              <Text style={[styles.badgeText, { color: theme.warning }]}>Perishable (48h)</Text>
+                            </View>
+                          ) : null}
+                        </View>
+                        <Text style={[styles.customItemSub, { color: theme.muted }]}>
+                          Donated: {item.donatedKg > 0 ? `${item.donatedKg} kg` : '0 kg'} · Serving: {item.gramPerServing}g / person
+                        </Text>
+                      </View>
+
+                      {item.id !== 'default_chicken' ? (
+                        <Pressable onPress={() => handleRemoveCustomItem(item.id)} style={styles.trashBtn}>
+                          <MaterialCommunityIcons name="trash-can-outline" size={18} color={theme.danger || '#ef4444'} />
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
               {freshMeatKg > 0 ? (
                 <View style={[styles.perishableAlert, { backgroundColor: theme.warningSoft || 'rgba(251,191,36,0.14)', borderColor: theme.warning }]}>
                   <MaterialCommunityIcons name="clock-alert-outline" size={20} color={theme.warning} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.alertTitle, { color: theme.warning }]}>🚨 48-Hour Dispatch Priority</Text>
+                    <Text style={[styles.alertTitle, { color: theme.warning }]}>🚨 48-Hour Dispatch Priority Alert</Text>
                     <Text style={[styles.alertText, { color: theme.text }]}>
-                      {freshMeatKg} kg Fresh Meat offsets {meatProteinOffsetKg} kg of dry pulse procurement! Dispatch within 48 hours to prevent spoilage.
+                      {freshMeatKg} kg Fresh Produce/Meat offsets {meatProteinOffsetKg} kg dry pulse procurement! Dispatch within 48 hours to prevent spoilage.
                     </Text>
                   </View>
                 </View>
@@ -297,15 +435,22 @@ export default function RationCalculator({ navigation }) {
             </SurfaceCard>
           </FadeInUp>
 
-          {/* Calculated Procurement Requirements */}
+          {/* Calculated Procurement Requirements Summary */}
           <FadeInUp delay={200}>
             <SurfaceCard padding={spacing.lg}>
               <Text style={[styles.cardTitle, { color: theme.text }]}>4. Required Procurement Summary</Text>
               <View style={styles.calcGrid}>
-                {calculations.map((c) => (
+                {allCalculations.map((c) => (
                   <View key={c.id} style={[styles.calcCard, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }]}>
                     <View style={styles.calcHeader}>
-                      <Text style={[styles.calcName, { color: theme.text }]}>{c.name}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={[styles.calcName, { color: theme.text }]}>{c.name}</Text>
+                        {c.isCustom ? (
+                          <View style={[styles.customBadge, { backgroundColor: theme.primarySoft }]}>
+                            <Text style={[styles.customBadgeText, { color: theme.primary }]}>Custom (+)</Text>
+                          </View>
+                        ) : null}
+                      </View>
                       <Text style={[styles.calcRate, { color: theme.muted }]}>{c.gramPerServing}g / serving</Text>
                     </View>
 
@@ -350,6 +495,81 @@ export default function RationCalculator({ navigation }) {
           </FadeInUp>
         </View>
       </ScrollView>
+
+      {/* Modal for adding dynamic custom donor item (+) */}
+      <Modal visible={isAddModalOpen} transparent animationType="slide" onRequestClose={() => setIsAddModalOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>+ Add Custom Donor / Ration Item</Text>
+              <Pressable onPress={() => setIsAddModalOpen(false)}>
+                <MaterialCommunityIcons name="close" size={22} color={theme.text} />
+              </Pressable>
+            </View>
+
+            <ScrollView contentContainerStyle={{ gap: spacing.md }}>
+              <TextInput
+                mode="outlined"
+                label="Item Name (e.g. Fresh Chicken, Milk Powder, Eggs)"
+                value={customItemName}
+                onChangeText={setCustomItemName}
+                style={styles.textInput}
+                outlineColor={theme.border}
+                activeOutlineColor={theme.primary}
+                textColor={theme.text}
+              />
+
+              <TextInput
+                mode="outlined"
+                label="Donated Quantity Received (kg)"
+                value={customDonatedKgText}
+                onChangeText={(t) => setCustomDonatedKgText(t.replace(/[^0-9.]/g, ''))}
+                keyboardType="numeric"
+                style={styles.textInput}
+                outlineColor={theme.border}
+                activeOutlineColor={theme.primary}
+                textColor={theme.text}
+              />
+
+              <TextInput
+                mode="outlined"
+                label="Portion per Serving (grams)"
+                value={customGramPerServingText}
+                onChangeText={(t) => setCustomGramPerServingText(t.replace(/[^0-9]/g, ''))}
+                keyboardType="numeric"
+                style={styles.textInput}
+                outlineColor={theme.border}
+                activeOutlineColor={theme.primary}
+                textColor={theme.text}
+              />
+
+              <Pressable
+                onPress={() => setCustomIsPerishable(!customIsPerishable)}
+                style={[
+                  styles.checkboxRow,
+                  { backgroundColor: theme.backgroundAlt, borderColor: theme.border },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name={customIsPerishable ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                  size={22}
+                  color={customIsPerishable ? theme.warning : theme.muted}
+                />
+                <Text style={[styles.checkboxText, { color: theme.text }]}>
+                  Perishable Priority Item (Triggers 48h dispatch warning)
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleAddCustomItemSubmit}
+                style={({ pressed }) => [styles.submitBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.85 }]}
+              >
+                <Text style={[styles.submitBtnText, { color: theme.primaryText }]}>Save Custom Donor Item</Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -379,8 +599,17 @@ function createStyles(theme) {
       minHeight: 48,
     },
     modeBtnText: { ...type.bodyStrong, fontSize: 13 },
-    cardTitle: { ...type.subtitle, fontSize: 16, marginBottom: spacing.md },
-    cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    cardTitle: { ...type.subtitle, fontSize: 16, marginBottom: 4 },
+    cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.sm },
+    addCustomBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs + 2,
+      borderRadius: radius.pill,
+    },
+    addCustomBtnText: { ...type.bodyStrong, fontSize: 12 },
     regionScroll: { gap: spacing.sm, paddingBottom: spacing.xs },
     regionChip: {
       paddingHorizontal: spacing.md,
@@ -402,8 +631,22 @@ function createStyles(theme) {
     inputWrap: { width: '47.5%' },
     inputWrapFull: { width: '100%' },
     fieldLabel: { ...type.caption, fontSize: 12, marginBottom: 4 },
-    fieldHelper: { ...type.caption, fontSize: 12, marginBottom: spacing.md },
+    fieldHelper: { ...type.caption, fontSize: 12, marginBottom: spacing.sm },
     textInput: { backgroundColor: theme.surfaceRaised },
+    customItemsList: { gap: spacing.xs, marginTop: spacing.md },
+    customItemCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: 1,
+    },
+    customItemTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    customItemName: { ...type.bodyStrong, fontSize: 14 },
+    customItemSub: { ...type.caption, fontSize: 12, marginTop: 2 },
+    badgePerishable: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs },
+    badgeText: { fontSize: 10, fontWeight: '700' },
+    trashBtn: { padding: spacing.xs },
     perishableAlert: {
       flexDirection: 'row',
       alignItems: 'flex-start',
@@ -424,6 +667,8 @@ function createStyles(theme) {
     calcMetric: { flex: 1 },
     metricSubLabel: { ...type.caption, fontSize: 11, marginBottom: 2 },
     metricVal: { fontSize: 18, fontWeight: '800' },
+    customBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs },
+    customBadgeText: { fontSize: 10, fontWeight: '700' },
     exportRow: { gap: spacing.md },
     exportBtn: {
       flexDirection: 'row',
@@ -435,5 +680,13 @@ function createStyles(theme) {
       minHeight: 48,
     },
     exportBtnText: { ...type.bodyStrong, fontSize: 14 },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: spacing.md },
+    modalCard: { padding: spacing.lg, borderRadius: radius.lg, borderWidth: 1, maxHeight: '80%' },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
+    modalTitle: { ...type.subtitle, fontSize: 16 },
+    checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: radius.md, borderWidth: 1 },
+    checkboxText: { ...type.caption, fontSize: 12, flex: 1 },
+    submitBtn: { paddingVertical: spacing.md, borderRadius: radius.md, alignItems: 'center', marginTop: spacing.xs },
+    submitBtnText: { ...type.bodyStrong, fontSize: 14 },
   });
 }
