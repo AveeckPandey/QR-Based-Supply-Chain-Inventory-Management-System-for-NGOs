@@ -472,6 +472,8 @@ export const strings = {
     language: 'Language',
     languageEnglish: 'English',
     languageHindi: 'हिन्दी',
+    currency: 'Currency',
+    selectCurrency: 'Select Application Currency',
     account: 'Account',
     signedInAs: 'Signed in as',
     role: 'Role',

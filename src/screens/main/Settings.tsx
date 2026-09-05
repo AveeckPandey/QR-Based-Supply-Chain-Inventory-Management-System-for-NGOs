@@ -156,7 +156,12 @@ export default function Settings({ navigation }: { navigation: any }) {
             <Modal visible={languageMenuOpen} transparent animationType="fade" onRequestClose={() => setLanguageMenuOpen(false)}>
               <Pressable style={styles.languageModalOverlay} onPress={() => setLanguageMenuOpen(false)}>
                 <Pressable style={[styles.languageModalSheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Text style={[styles.languageModalTitle, { color: theme.text }]}>{t.language}</Text>
+                  <View style={styles.modalHeader}>
+                    <Text style={[styles.languageModalTitle, { color: theme.text }]}>{t.language}</Text>
+                    <Pressable onPress={() => setLanguageMenuOpen(false)} hitSlop={8}>
+                      <MaterialCommunityIcons name="close" size={20} color={theme.muted} />
+                    </Pressable>
+                  </View>
                   <ScrollView style={styles.languageList}>
                     {LANGUAGE_OPTIONS.map((option) => (
                       <Pressable
@@ -183,10 +188,11 @@ export default function Settings({ navigation }: { navigation: any }) {
             </Modal>
           </View>
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>{(t as any).currency || 'Currency'}</Text>
+            <Text style={styles.fieldLabel}>{t.currency || 'Currency'}</Text>
             <Pressable
               onPress={() => setCurrencyMenuOpen(true)}
               accessibilityRole="button"
+              accessibilityLabel={`${t.currency || 'Currency'}: ${currency.label}`}
               style={({ pressed }) => [
                 styles.languagePicker,
                 {
@@ -196,13 +202,23 @@ export default function Settings({ navigation }: { navigation: any }) {
                 },
               ]}
             >
-              <Text style={[styles.languagePickerText, { color: theme.text }]}>{currency.label}</Text>
+              <View style={styles.currencyBadgeRow}>
+                <View style={[styles.currencySymbolBadge, { backgroundColor: theme.primary + '22' }]}>
+                  <Text style={[styles.currencySymbolText, { color: theme.primary }]}>{currency.symbol}</Text>
+                </View>
+                <Text style={[styles.languagePickerText, { color: theme.text }]}>{currency.label}</Text>
+              </View>
               <MaterialCommunityIcons name="chevron-down" size={18} color={theme.muted} />
             </Pressable>
             <Modal visible={currencyMenuOpen} transparent animationType="fade" onRequestClose={() => setCurrencyMenuOpen(false)}>
               <Pressable style={styles.languageModalOverlay} onPress={() => setCurrencyMenuOpen(false)}>
                 <Pressable style={[styles.languageModalSheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Text style={[styles.languageModalTitle, { color: theme.text }]}>{(t as any).currency || 'Currency'}</Text>
+                  <View style={styles.modalHeader}>
+                    <Text style={[styles.languageModalTitle, { color: theme.text }]}>{t.selectCurrency || t.currency || 'Currency'}</Text>
+                    <Pressable onPress={() => setCurrencyMenuOpen(false)} hitSlop={8}>
+                      <MaterialCommunityIcons name="close" size={20} color={theme.muted} />
+                    </Pressable>
+                  </View>
                   <ScrollView style={styles.languageList}>
                     {CURRENCY_OPTIONS.map((option) => (
                       <Pressable
@@ -217,9 +233,14 @@ export default function Settings({ navigation }: { navigation: any }) {
                           },
                         ]}
                       >
-                        <Text style={[styles.languageOptionText, { color: theme.text }]}>{option.label}</Text>
+                        <View style={styles.currencyOptionBadgeRow}>
+                          <View style={[styles.currencySymbolBadge, { backgroundColor: currency.code === option.code ? theme.primary : theme.border + '40' }]}>
+                            <Text style={[styles.currencySymbolText, { color: currency.code === option.code ? '#FFFFFF' : theme.text }]}>{option.symbol}</Text>
+                          </View>
+                          <Text style={[styles.languageOptionText, { color: theme.text, fontWeight: currency.code === option.code ? '700' : '400' }]}>{option.label}</Text>
+                        </View>
                         {currency.code === option.code ? (
-                          <MaterialCommunityIcons name="check" size={18} color={theme.primary} />
+                          <MaterialCommunityIcons name="check-circle" size={20} color={theme.primary} />
                         ) : null}
                       </Pressable>
                     ))}
@@ -441,7 +462,37 @@ function createStyles(theme) {
     },
     languageModalTitle: {
       ...type.eyebrow,
-      marginBottom: spacing.sm,
+      marginBottom: 0,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.md,
+      paddingBottom: spacing.xs,
+    },
+    currencyBadgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      flex: 1,
+    },
+    currencyOptionBadgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      flex: 1,
+    },
+    currencySymbolBadge: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    currencySymbolText: {
+      fontSize: 13,
+      fontWeight: '700',
     },
     languageList: {
       maxHeight: 420,

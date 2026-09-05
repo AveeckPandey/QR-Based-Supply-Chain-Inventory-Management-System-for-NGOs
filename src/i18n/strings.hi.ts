@@ -470,6 +470,8 @@ export const strings = {
     language: "भाषा",
     languageEnglish: "English",
     languageHindi: "हिन्दी",
+    currency: "मुद्रा",
+    selectCurrency: "ऐप की मुद्रा चुनें",
     account: "खाता",
     signedInAs: "के रूप में साइन इन",
     role: "भूमिका",
