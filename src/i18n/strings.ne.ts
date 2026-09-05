@@ -7,6 +7,14 @@ export const strings = {
     tagline: "गैरसरकारी संस्थाका लागि QR आपूर्ति श्रृंखला",
   },
 
+  nav: {
+    home: "गृह",
+    boxes: "बक्सहरू",
+    scan: "स्क्यान",
+    analytics: "विश्लेषण",
+    settings: "सेटिङहरू",
+  },
+
   auth: {
     signIn: "साइन इन गर्नुहोस्",
     signUp: "खाता बनाउनुहोस्",

@@ -7,6 +7,14 @@ export const strings = {
     tagline: "NGO සඳහා QR සැපයුම් දාම පද්ධතිය",
   },
 
+  nav: {
+    home: "මුල් පිටුව",
+    boxes: "පෙට්ටි",
+    scan: "ස්කෑන්",
+    analytics: "විශ්ලේෂණ",
+    settings: "සැකසීම්",
+  },
+
   auth: {
     signIn: "ඇතුල් වන්න (Sign In)",
     signUp: "ගිණුමක් සාදන්න",

@@ -18,6 +18,14 @@ export const strings = {
     tagline: "NGO के लिए QR आपूर्ति श्रृंखला",
   },
 
+  nav: {
+    home: "होम",
+    boxes: "बॉक्सेस",
+    scan: "स्कैन",
+    analytics: "एनालिटिक्स",
+    settings: "सेटिंग्स",
+  },
+
   auth: {
     signIn: "साइन इन",
     signUp: "खाता बनाएँ",

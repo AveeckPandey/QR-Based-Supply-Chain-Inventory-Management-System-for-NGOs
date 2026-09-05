@@ -7,6 +7,14 @@ export const strings = {
     tagline: "Mfumo wa QR wa Ugavi wa Mashirika yasiyo ya Kiserikali (NGO)",
   },
 
+  nav: {
+    home: "Mwanzo",
+    boxes: "Makasha",
+    scan: "Soma QR",
+    analytics: "Uchambuzi",
+    settings: "Mipangilio",
+  },
+
   auth: {
     signIn: "Ingia",
     signUp: "Tengeneza Akaunti",

@@ -7,6 +7,14 @@ export const strings = {
     tagline: "Chaîne Logistique QR pour ONG",
   },
 
+  nav: {
+    home: "Accueil",
+    boxes: "Colis",
+    scan: "Scanner",
+    analytics: "Analytique",
+    settings: "Paramètres",
+  },
+
   auth: {
     signIn: "Se Connecter",
     signUp: "Créer un Compte",

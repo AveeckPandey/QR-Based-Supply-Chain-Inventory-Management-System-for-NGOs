@@ -9,6 +9,14 @@ export const strings = {
     tagline: 'QR Supply Chain for NGOs',
   },
 
+  nav: {
+    home: 'Home',
+    boxes: 'Boxes',
+    scan: 'Scan',
+    analytics: 'Analytics',
+    settings: 'Settings',
+  },
+
   auth: {
     signIn: 'Sign In',
     signUp: 'Create Account',

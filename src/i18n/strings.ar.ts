@@ -7,6 +7,14 @@ export const strings = {
     tagline: "نظام إدارة سلاسل الإمداد للمنظمات غير الحكومية",
   },
 
+  nav: {
+    home: "الرئيسية",
+    boxes: "الصناديق",
+    scan: "المسح",
+    analytics: "التحليلات",
+    settings: "الإعدادات",
+  },
+
   auth: {
     signIn: "تسجيل الدخول",
     signUp: "إنشاء حساب",

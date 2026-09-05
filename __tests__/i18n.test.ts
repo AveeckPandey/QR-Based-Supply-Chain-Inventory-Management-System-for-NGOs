@@ -58,4 +58,14 @@ describe('HopeBox Internationalization (i18n)', () => {
     expect(catalogs.fr.dashboard.title).toBe('Tableau de Bord');
     expect(catalogs.sw.dashboard.title).toBe('Dawati Kuu (Dashboard)');
   });
+
+  test('Navigation bar labels return localized strings for bottom tab bar', () => {
+    expect(catalogs.hi.nav.home).toBe('होम');
+    expect(catalogs.hi.nav.boxes).toBe('बॉक्सेस');
+    expect(catalogs.hi.nav.scan).toBe('स्कैन');
+    expect(catalogs.bn.nav.home).toBe('হোম');
+    expect(catalogs.es.nav.home).toBe('Inicio');
+    expect(catalogs.fr.nav.home).toBe('Accueil');
+    expect(catalogs.ar.nav.home).toBe('الرئيسية');
+  });
 });

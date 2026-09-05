@@ -92,6 +92,13 @@ function CustomTabBar({ state, descriptors, navigation }) {
 // (e.g. Scan → BoxDetails) without cross-stack wiring.
 function MainTabs() {
   const { t } = useLanguage();
+  const tNav = t('nav') || {};
+
+  const homeLabel = typeof tNav === 'object' && tNav.home ? tNav.home : 'Home';
+  const boxesLabel = typeof tNav === 'object' && tNav.boxes ? tNav.boxes : 'Boxes';
+  const scanLabel = typeof tNav === 'object' && tNav.scan ? tNav.scan : 'Scan';
+  const analyticsLabel = typeof tNav === 'object' && tNav.analytics ? tNav.analytics : 'Analytics';
+  const settingsLabel = typeof tNav === 'object' && tNav.settings ? tNav.settings : 'Settings';
 
   return (
     <Tab.Navigator
@@ -105,8 +112,8 @@ function MainTabs() {
         name="Home"
         component={Dashboard}
         options={{
-          title: 'Home',
-          tabBarLabel: 'Home',
+          title: homeLabel,
+          tabBarLabel: homeLabel,
           tabBarIconName: 'home-outline',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any}
@@ -115,8 +122,8 @@ function MainTabs() {
         name="Boxes"
         component={Boxes}
         options={{
-          title: 'Boxes',
-          tabBarLabel: 'Boxes',
+          title: boxesLabel,
+          tabBarLabel: boxesLabel,
           tabBarIconName: 'package-variant-closed',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any}
@@ -125,8 +132,8 @@ function MainTabs() {
         name="Scan"
         component={ScanQR}
         options={{
-          title: 'Scan',
-          tabBarLabel: 'Scan',
+          title: scanLabel,
+          tabBarLabel: scanLabel,
           tabBarIconName: 'qrcode-scan',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any}
@@ -135,8 +142,8 @@ function MainTabs() {
         name="Analytics"
         component={Analytics}
         options={{
-          title: 'Analytics',
-          tabBarLabel: 'Analytics',
+          title: analyticsLabel,
+          tabBarLabel: analyticsLabel,
           tabBarIconName: 'chart-bar',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any}
@@ -145,8 +152,8 @@ function MainTabs() {
         name="Settings"
         component={Settings}
         options={{
-          title: 'Settings',
-          tabBarLabel: 'Settings',
+          title: settingsLabel,
+          tabBarLabel: settingsLabel,
           tabBarIconName: 'cog-outline',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any}

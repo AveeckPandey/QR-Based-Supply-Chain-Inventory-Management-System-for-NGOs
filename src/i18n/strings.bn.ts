@@ -7,6 +7,14 @@ export const strings = {
     tagline: "এনজিওর জন্য কিউআর সাপ্লাই চেইন সিস্টেম",
   },
 
+  nav: {
+    home: "হোম",
+    boxes: "বক্সসমূহ",
+    scan: "স্ক্যান",
+    analytics: "অ্যানালিটিক্স",
+    settings: "সেটিংস",
+  },
+
   auth: {
     signIn: "সাইন ইন করুন",
     signUp: "অ্যাকাউন্ট তৈরি করুন",

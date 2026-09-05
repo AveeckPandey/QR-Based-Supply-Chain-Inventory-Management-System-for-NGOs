@@ -7,6 +7,14 @@ export const strings = {
     tagline: "Cadena de Suministro QR para ONGs",
   },
 
+  nav: {
+    home: "Inicio",
+    boxes: "Cajas",
+    scan: "Escanear",
+    analytics: "Analítica",
+    settings: "Ajustes",
+  },
+
   auth: {
     signIn: "Iniciar Sesión",
     signUp: "Crear Cuenta",
