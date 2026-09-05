@@ -5,6 +5,10 @@ import { merged as hiStrings } from "../i18n/strings.hi";
 import { merged as bnStrings } from "../i18n/strings.bn";
 import { merged as neStrings } from "../i18n/strings.ne";
 import { merged as siStrings } from "../i18n/strings.si";
+import { merged as arStrings } from "../i18n/strings.ar";
+import { merged as esStrings } from "../i18n/strings.es";
+import { merged as frStrings } from "../i18n/strings.fr";
+import { merged as swStrings } from "../i18n/strings.sw";
 
 const LANGUAGE_KEY = "hopebox-language";
 
@@ -15,9 +19,9 @@ export const LANGUAGE_OPTIONS = [
   { key: "ne", label: "नेपाली (Nepali)" },
   { key: "si", label: "සිංහල (Sinhala)" },
   { key: "ar", label: "العربية (Arabic)" },
-  { key: "sw", label: "Kiswahili (Swahili)" },
-  { key: "fr", label: "Français (French)" },
   { key: "es", label: "Español (Spanish)" },
+  { key: "fr", label: "Français (French)" },
+  { key: "sw", label: "Kiswahili (Swahili)" },
   { key: "pt", label: "Português (Portuguese)" },
   { key: "id", label: "Bahasa Indonesia" },
   { key: "ms", label: "Bahasa Melayu" },
@@ -40,19 +44,19 @@ const loaders: Record<Language, () => unknown> = {
   bn: () => bnStrings,
   ne: () => neStrings,
   si: () => siStrings,
+  ar: () => arStrings,
+  es: () => esStrings,
+  fr: () => frStrings,
+  sw: () => swStrings,
   ts: () => strings,
   lg: () => strings,
-  ar: () => strings,
   yo: () => strings,
   ms: () => strings,
   id: () => strings,
-  sw: () => strings,
-  fr: () => strings,
   zu: () => strings,
   fil: () => strings,
   it: () => strings,
   pt: () => strings,
-  es: () => strings,
   mg: () => strings,
   ny: () => strings,
 };
