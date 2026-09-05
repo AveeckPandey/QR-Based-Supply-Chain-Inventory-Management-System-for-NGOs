@@ -223,6 +223,7 @@ export default function Dashboard({ navigation }) {
   const goInventory = useCallback(() => navigation.navigate('AdminInventory'), [navigation]);
   const goAnalytics = useCallback(() => navigation.navigate('Analytics'), [navigation]);
   const goAudit = useCallback(() => navigation.navigate('AuditLog'), [navigation]);
+  const goRationCalc = useCallback(() => navigation.navigate('RationCalculator'), [navigation]);
 
   // P38: build the action-tile list. We intentionally do NOT wrap
   // this in useMemo — `boxes` is a fresh reference on every Firestore
@@ -356,6 +357,14 @@ export default function Dashboard({ navigation }) {
               </View>
               <View style={styles.headerIconButtonRow}>
                 <Pressable
+                  onPress={goRationCalc}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ration Calculator"
+                  style={({ pressed }) => [styles.headerIconButton, { backgroundColor: theme.surfaceRaised, borderColor: theme.border }, pressed && { opacity: 0.7 }]}
+                >
+                  <MaterialCommunityIcons name="calculator-variant-outline" size={20} color={theme.primary} />
+                </Pressable>
+                <Pressable
                   onPress={() => navigation.navigate('Settings')}
                   accessibilityRole="button"
                   accessibilityLabel="Settings"
@@ -474,11 +483,21 @@ export default function Dashboard({ navigation }) {
             </SurfaceCard>
           </FadeInUp>
 
-          {/* Quick Actions 2x2 Grid */}
+          {/* Quick Actions Grid */}
           <FadeInUp delay={200}>
             <SurfaceCard padding={spacing.lg}>
               <Text style={[styles.cardSectionEyebrow, { color: theme.muted }]}>QUICK ACTIONS</Text>
               <View style={styles.quickGrid2x2}>
+                <Pressable
+                  onPress={goRationCalc}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ration calculator"
+                  style={({ pressed }) => [styles.quickTile, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }, pressed && { opacity: 0.8 }]}
+                >
+                  <MaterialCommunityIcons name="calculator-variant-outline" size={26} color={theme.primary} />
+                  <Text style={[styles.quickTileText, { color: theme.text }]}>Ration Calculator</Text>
+                </Pressable>
+
                 <Pressable
                   onPress={goBoxes}
                   accessibilityRole="button"
@@ -507,16 +526,6 @@ export default function Dashboard({ navigation }) {
                 >
                   <MaterialCommunityIcons name="chart-bar" size={26} color={theme.primary} />
                   <Text style={[styles.quickTileText, { color: theme.text }]}>Analytics</Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={actionTiles.find((t) => t.key === 'csv')?.onPress}
-                  accessibilityRole="button"
-                  accessibilityLabel="Export report"
-                  style={({ pressed }) => [styles.quickTile, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }, pressed && { opacity: 0.8 }]}
-                >
-                  <MaterialCommunityIcons name="file-export-outline" size={26} color={theme.primary} />
-                  <Text style={[styles.quickTileText, { color: theme.text }]}>Export report</Text>
                 </Pressable>
               </View>
             </SurfaceCard>

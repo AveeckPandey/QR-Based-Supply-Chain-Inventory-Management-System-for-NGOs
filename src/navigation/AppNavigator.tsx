@@ -155,6 +155,8 @@ function MainTabs() {
   );
 }
 
+import RationCalculator from '../screens/main/RationCalculator';
+
 export default function AppNavigator() {
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -168,6 +170,7 @@ export default function AppNavigator() {
       <Stack.Screen name="AuditLog" component={AuditLog} />
       <Stack.Screen name="Commodities" component={Commodities} />
       <Stack.Screen name="Templates" component={Templates} />
+      <Stack.Screen name="RationCalculator" component={RationCalculator} />
     </Stack.Navigator>
   );
 }
