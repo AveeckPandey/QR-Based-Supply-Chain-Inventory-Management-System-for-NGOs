@@ -68,4 +68,14 @@ describe('HopeBox Internationalization (i18n)', () => {
     expect(catalogs.fr.nav.home).toBe('Accueil');
     expect(catalogs.ar.nav.home).toBe('الرئيسية');
   });
+
+  test('Commodity names, units, and audit actions map cleanly across catalogs', () => {
+    expect(catalogs.hi.commodityNames.commodity_rice).toContain('चावल');
+    expect(catalogs.hi.units.kg).toBe('किग्रा');
+    expect(catalogs.hi.auditActions.export_csv).toBe('CSV निर्यात');
+    expect(catalogs.bn.units.kg).toBe('কেজি');
+    expect(catalogs.es.units.kg).toBe('kg');
+    expect(catalogs.fr.units.kg).toBe('kg');
+    expect(catalogs.ar.units.kg).toBe('كجم');
+  });
 });

@@ -412,7 +412,7 @@ export default function Dashboard({ navigation }) {
                 <View style={styles.targetProgressHeader}>
                   <Text style={[styles.targetProgressTitle, { color: theme.text }]}>{t.targetCoverage || 'Target coverage'}</Text>
                   <Text style={[styles.targetProgressPercent, { color: theme.warning }]}>
-                    {Math.round(completionRate)}% <Text style={[styles.targetProgressSubText, { color: theme.muted }]}>({possibleBoxes} of {targetNum || 100} HH)</Text>
+                    {Math.round(completionRate)}% <Text style={[styles.targetProgressSubText, { color: theme.muted }]}>({possibleBoxes} {t.of || 'of'} {targetNum || 100} {t.hh || 'HH'})</Text>
                   </Text>
                 </View>
                 <View style={[styles.targetProgressBarTrack, { backgroundColor: theme.backgroundAlt }]}>
@@ -438,15 +438,17 @@ export default function Dashboard({ navigation }) {
                   {chartData.map((item) => {
                     const statusColor = item.shortage > 0 ? (theme.warning || '#FBBF24') : (theme.success || '#10B981');
                     const statusLabel = item.shortage > 0 ? `↓ ${t.low || 'low'}` : (t.healthy || 'healthy');
+                    const localizedCommodityName = tAll('commodityNames')?.[item.id] || tAll('commodityNames')?.[item.id.replace('commodity_', '')] || item.label;
+                    const localizedUnit = tAll('units')?.[item.unit] || item.unit;
                     return (
                       <View key={item.id} style={styles.inventoryRow}>
                         <View style={styles.inventoryHeader}>
                           <View style={styles.inventoryNameRow}>
                             <View style={[styles.legendDot, { backgroundColor: statusColor }]} />
-                            <Text style={[styles.inventoryName, { color: theme.text }]}>{item.label}</Text>
+                            <Text style={[styles.inventoryName, { color: theme.text }]}>{localizedCommodityName}</Text>
                           </View>
                           <Text style={[styles.inventoryValue, { color: theme.text }]}>
-                            {item.value.toLocaleString()} {item.unit} <Text style={{ color: statusColor, fontSize: 12 }}>{statusLabel}</Text>
+                            {item.value.toLocaleString()} {localizedUnit} <Text style={{ color: statusColor, fontSize: 12 }}>{statusLabel}</Text>
                           </Text>
                         </View>
                         <View style={[styles.chartTrack, { backgroundColor: theme.backgroundAlt }]}>

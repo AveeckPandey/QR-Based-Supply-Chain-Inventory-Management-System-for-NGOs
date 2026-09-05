@@ -11,6 +11,7 @@ import { useSimpleMode } from '../../contexts/SimpleModeContext';
 import ScreenHeader from '../../components/ScreenHeader';
 import SurfaceCard from '../../components/SurfaceCard';
 import { LANGUAGE_OPTIONS, useLanguage } from '../../contexts/LanguageContext';
+import { CURRENCY_OPTIONS, useCurrency } from '../../contexts/CurrencyContext';
 import { snackbar } from '../../hooks/useSnackbar';
 import { layout, radius, spacing, type } from '../../theme/tokens';
 
@@ -18,11 +19,13 @@ export default function Settings({ navigation }: { navigation: any }) {
   const { theme, themeName, brandPreset, toggleTheme, setBrandPreset } = useAppTheme();
   const { userData, isAdmin, canEdit } = useUser();
   const { t: tAll, tf, language, setLanguage } = useLanguage();
+  const { currency, setCurrencyCode } = useCurrency();
   const { simpleMode, setSimpleMode } = useSimpleMode();
   const t = tAll('settings');
   const tCommon = tAll('common');
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [currencyMenuOpen, setCurrencyMenuOpen] = useState(false);
 
   const showInventory = canEdit;
   const showCommodities = isAdmin;
@@ -33,6 +36,13 @@ export default function Settings({ navigation }: { navigation: any }) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLanguage(next);
     setLanguageMenuOpen(false);
+  };
+
+  const handleCurrencyChange = (code: string) => {
+    if (code === currency.code) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void setCurrencyCode(code);
+    setCurrencyMenuOpen(false);
   };
 
   const selectedLanguageLabel = LANGUAGE_OPTIONS.find((option) => option.key === language)?.label || 'English';
@@ -163,6 +173,52 @@ export default function Settings({ navigation }: { navigation: any }) {
                       >
                         <Text style={[styles.languageOptionText, { color: theme.text }]}>{option.label}</Text>
                         {language === option.key ? (
+                          <MaterialCommunityIcons name="check" size={18} color={theme.primary} />
+                        ) : null}
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </Pressable>
+              </Pressable>
+            </Modal>
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.fieldLabel}>{(t as any).currency || 'Currency'}</Text>
+            <Pressable
+              onPress={() => setCurrencyMenuOpen(true)}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.languagePicker,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: theme.border,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.languagePickerText, { color: theme.text }]}>{currency.label}</Text>
+              <MaterialCommunityIcons name="chevron-down" size={18} color={theme.muted} />
+            </Pressable>
+            <Modal visible={currencyMenuOpen} transparent animationType="fade" onRequestClose={() => setCurrencyMenuOpen(false)}>
+              <Pressable style={styles.languageModalOverlay} onPress={() => setCurrencyMenuOpen(false)}>
+                <Pressable style={[styles.languageModalSheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Text style={[styles.languageModalTitle, { color: theme.text }]}>{(t as any).currency || 'Currency'}</Text>
+                  <ScrollView style={styles.languageList}>
+                    {CURRENCY_OPTIONS.map((option) => (
+                      <Pressable
+                        key={option.code}
+                        onPress={() => handleCurrencyChange(option.code)}
+                        style={({ pressed }) => [
+                          styles.languageOption,
+                          {
+                            backgroundColor: currency.code === option.code ? theme.primary + '22' : 'transparent',
+                            borderColor: currency.code === option.code ? theme.primary : theme.border,
+                            opacity: pressed ? 0.8 : 1,
+                          },
+                        ]}
+                      >
+                        <Text style={[styles.languageOptionText, { color: theme.text }]}>{option.label}</Text>
+                        {currency.code === option.code ? (
                           <MaterialCommunityIcons name="check" size={18} color={theme.primary} />
                         ) : null}
                       </Pressable>

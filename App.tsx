@@ -12,6 +12,7 @@ import { UserProvider, useUser } from './src/contexts/UserContext';
 import { WarehouseProvider } from './src/contexts/WarehouseContext';
 import { CommoditiesProvider } from './src/contexts/CommoditiesContext';
 import { LanguageProvider } from './src/contexts/LanguageContext';
+import { CurrencyProvider } from './src/contexts/CurrencyContext';
 import { NetworkProvider } from './src/contexts/NetworkContext';
 import { SimpleModeProvider } from './src/contexts/SimpleModeContext';
 
@@ -90,15 +91,17 @@ export default function App() {
         <AppThemeContext.Provider value={{ theme: appPalette, themeName, brandPreset, toggleTheme, setBrandPreset }}>
           <NetworkProvider>
             <LanguageProvider>
-              <UserProvider>
-                <WarehouseProvider>
-                  <CommoditiesProvider>
-                    <SimpleModeProvider>
-                      <NavigationRoot navigationTheme={navigationTheme} themeName={themeName} />
-                    </SimpleModeProvider>
-                  </CommoditiesProvider>
-                </WarehouseProvider>
-              </UserProvider>
+              <CurrencyProvider>
+                <UserProvider>
+                  <WarehouseProvider>
+                    <CommoditiesProvider>
+                      <SimpleModeProvider>
+                        <NavigationRoot navigationTheme={navigationTheme} themeName={themeName} />
+                      </SimpleModeProvider>
+                    </CommoditiesProvider>
+                  </WarehouseProvider>
+                </UserProvider>
+              </CurrencyProvider>
             </LanguageProvider>
           </NetworkProvider>
         </AppThemeContext.Provider>

@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useAppTheme } from '../../theme/AppThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { REGIONAL_RATION_PRESETS, type RegionPreset } from '../../services/rationPresets';
 import {
   calculateCookedOutputKg,
@@ -40,6 +41,7 @@ export default function RationCalculator({ navigation }) {
   const { theme } = useAppTheme();
   const { currentWarehouse } = useWarehouse();
   const { t: tAll } = useLanguage();
+  const { currency, formatCurrency } = useCurrency();
   const tCalc = tAll('rationCalc') || {};
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -202,7 +204,7 @@ export default function RationCalculator({ navigation }) {
       GrossRequiredKgL: `${c.requiredKg} ${c.unit}`,
       NetRequiredKgL: `${c.netRequiredKg} ${c.unit}`,
       CookedOutputKg: `${c.cookedOutputKg} kg`,
-      EstCostUSD: `$${c.estimatedCost.toFixed(2)}`,
+      EstCost: `${currency.symbol}${c.estimatedCost.toFixed(2)}`,
     }));
 
     try {
@@ -470,14 +472,14 @@ export default function RationCalculator({ navigation }) {
               <View style={styles.quoteMetricsRow}>
                 <MetricTile
                   label={tCalc.totalSponsorship || "Total Donor Sponsorship"}
-                  value={`$${totalSponsorshipBudget.toLocaleString()}`}
+                  value={formatCurrency(totalSponsorshipBudget)}
                   subtext={tCalc.estBudgetFor ? tCalc.estBudgetFor.replace('{{totalMeals}}', String(totalMeals)) : `Est. budget for ${totalMeals} meals`}
                   icon="cash-multiple"
                   variant="primary"
                 />
                 <MetricTile
                   label={tCalc.costPerMeal || "Cost Per Meal"}
-                  value={`$${costPerMeal}`}
+                  value={`${currency.symbol}${costPerMeal}`}
                   subtext={tCalc.perPersonMeal || "Per person / meal"}
                   icon="currency-usd"
                   variant="success"
@@ -522,7 +524,7 @@ export default function RationCalculator({ navigation }) {
                       </View>
                       <View style={styles.calcMetric}>
                         <Text style={[styles.metricSubLabel, { color: theme.muted }]}>{tCalc.estCost || "Est. Cost"}</Text>
-                        <Text style={[styles.metricVal, { color: theme.success }]}>${c.estimatedCost.toFixed(2)}</Text>
+                        <Text style={[styles.metricVal, { color: theme.success }]}>{currency.symbol}{c.estimatedCost.toFixed(2)}</Text>
                       </View>
                     </View>
                   </View>

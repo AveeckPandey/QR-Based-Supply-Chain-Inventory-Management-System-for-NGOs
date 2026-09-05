@@ -416,14 +416,18 @@ export default function Analytics() {
             <SurfaceCard>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>{t.inventoryTotals}</Text>
               <View style={styles.metricGrid}>
-                {commodities.map((c) => (
-                  <MetricTile
-                    key={c.id}
-                    label={c.name}
-                    value={stats.commodityTotals[c.id] || 0}
-                    unit={c.unit}
-                  />
-                ))}
+                {commodities.map((c) => {
+                  const localizedName = tAll('commodityNames')?.[c.id] || tAll('commodityNames')?.[c.id.replace('commodity_', '')] || c.name;
+                  const localizedUnit = tAll('units')?.[c.unit] || c.unit;
+                  return (
+                    <MetricTile
+                      key={c.id}
+                      label={localizedName}
+                      value={stats.commodityTotals[c.id] || 0}
+                      unit={localizedUnit}
+                    />
+                  );
+                })}
               </View>
             </SurfaceCard>
           </FadeInUp>
@@ -480,7 +484,7 @@ export default function Analytics() {
                 <MetricTile label={t.auditLogs} value={stats.totalAuditLogs} tone="warning" />
               </View>
               {Object.entries(stats.scansByAction).map(([action, count]) =>
-                renderBar(action, count, stats.totalScans, theme.primary)
+                renderBar(tAll('auditActions')?.[action] || action, count, stats.totalScans, theme.primary)
               )}
               {hasMoreScans ? (
                 <Pressable
@@ -503,7 +507,7 @@ export default function Analytics() {
                 <View style={styles.auditActivity}>
                   <Text style={[styles.auditTitle, { color: theme.text }]}>{t.auditActivity}</Text>
                   {Object.entries(stats.auditByAction).slice(0, 5).map(([action, count]) =>
-                    renderBar(action, count, stats.totalAuditLogs, theme.warning)
+                    renderBar(tAll('auditActions')?.[action] || action, count, stats.totalAuditLogs, theme.warning)
                   )}
                 </View>
               ) : null}
