@@ -14,7 +14,7 @@ import { merged as idStrings } from "../i18n/strings.id";
 import { merged as msStrings } from "../i18n/strings.ms";
 import { merged as filStrings } from "../i18n/strings.fil";
 import { merged as itStrings } from "../i18n/strings.it";
-import { merged as tsStrings } from "../i18n/strings.ts";
+import { merged as tsStrings } from "../i18n/strings.tn";
 import { merged as lgStrings } from "../i18n/strings.lg";
 import { merged as yoStrings } from "../i18n/strings.yo";
 import { merged as zuStrings } from "../i18n/strings.zu";
