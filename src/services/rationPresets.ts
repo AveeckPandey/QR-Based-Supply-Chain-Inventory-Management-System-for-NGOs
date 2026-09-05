@@ -24,7 +24,7 @@ export const REGIONAL_RATION_PRESETS: RegionPreset[] = [
     typicalMeals: ['Dal Khichdi & Sabzi', 'Rice, Dal & Sambar', 'Roti & Veg Curry', 'Poha / Upma'],
     staples: [
       { id: 'rice', name: 'Raw Rice', unit: 'kg', fullReliefGramPerDay: 400, singleMealGram: 120, yieldKey: 'rice', estimatedCostPerUnit: 0.80 },
-      { id: 'dal', name: 'Lentils (Dal)', unit: 'kg', fullReliefGramPerDay: 80, singleMealGram: 40, yieldKey: 'dal', estimatedCostPerUnit: 1.40 },
+      { id: 'dal', name: 'Pulses / Lentils (Dal)', unit: 'kg', fullReliefGramPerDay: 80, singleMealGram: 40, yieldKey: 'dal', estimatedCostPerUnit: 1.40 },
       { id: 'wheat', name: 'Wheat Flour (Atta)', unit: 'kg', fullReliefGramPerDay: 100, singleMealGram: 30, yieldKey: 'wheat', estimatedCostPerUnit: 0.60 },
       { id: 'oil', name: 'Vegetable Oil', unit: 'L', fullReliefGramPerDay: 25, singleMealGram: 10, yieldKey: 'vegetables', estimatedCostPerUnit: 1.80 },
     ],
