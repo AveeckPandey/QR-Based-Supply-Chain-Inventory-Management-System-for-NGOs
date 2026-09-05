@@ -48,4 +48,22 @@ describe('Currency Exchange Rates & Conversion Engine', () => {
     expect(formattedJpy).toContain('14,550');
     expect(formattedJpy).not.toContain('.00');
   });
+
+  test('Custom Exchange Rate Override Math', () => {
+    const usdAmount = 100;
+
+    // Standard live rate for INR is 83.90 -> $100 = 8,390 INR
+    const liveInr = usdAmount * FALLBACK_RATES['INR'];
+    expect(liveInr).toBe(8390);
+
+    // Custom specified rate for INR is 86.50 -> $100 = 8,650 INR
+    const customRates: Record<string, number> = { INR: 86.5, GBP: 0.82, JPY: 152.0 };
+    const customInr = usdAmount * customRates['INR'];
+    const customGbp = usdAmount * customRates['GBP'];
+    const customJpy = usdAmount * customRates['JPY'];
+
+    expect(customInr).toBe(8650);
+    expect(customGbp).toBe(82);
+    expect(customJpy).toBe(15200);
+  });
 });

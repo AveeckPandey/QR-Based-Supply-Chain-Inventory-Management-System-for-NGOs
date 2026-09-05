@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Switch } from 'react-native-paper';
+import { Switch, TextInput } from 'react-native-paper';
 import { signOut } from 'firebase/auth';
 import * as Haptics from 'expo-haptics';
 import { auth } from '../../services/firebase';
@@ -11,7 +11,7 @@ import { useSimpleMode } from '../../contexts/SimpleModeContext';
 import ScreenHeader from '../../components/ScreenHeader';
 import SurfaceCard from '../../components/SurfaceCard';
 import { LANGUAGE_OPTIONS, useLanguage } from '../../contexts/LanguageContext';
-import { CURRENCY_OPTIONS, useCurrency } from '../../contexts/CurrencyContext';
+import { CURRENCY_OPTIONS, FALLBACK_RATES, useCurrency } from '../../contexts/CurrencyContext';
 import { snackbar } from '../../hooks/useSnackbar';
 import { layout, radius, spacing, type } from '../../theme/tokens';
 
@@ -19,13 +19,25 @@ export default function Settings({ navigation }: { navigation: any }) {
   const { theme, themeName, brandPreset, toggleTheme, setBrandPreset } = useAppTheme();
   const { userData, isAdmin, canEdit } = useUser();
   const { t: tAll, tf, language, setLanguage } = useLanguage();
-  const { currency, setCurrencyCode, rates, isLiveRates } = useCurrency();
+  const {
+    currency,
+    setCurrencyCode,
+    rates,
+    customRates,
+    useCustomRates,
+    setUseCustomRates,
+    setCustomRate,
+    getEffectiveRate,
+    isLiveRates,
+  } = useCurrency();
   const { simpleMode, setSimpleMode } = useSimpleMode();
   const t = tAll('settings');
   const tCommon = tAll('common');
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [currencyMenuOpen, setCurrencyMenuOpen] = useState(false);
+  const [customRatesModalOpen, setCustomRatesModalOpen] = useState(false);
+  const [customRateInputs, setCustomRateInputs] = useState<Record<string, string>>({});
 
   const showInventory = canEdit;
   const showCommodities = isAdmin;
@@ -191,9 +203,22 @@ export default function Settings({ navigation }: { navigation: any }) {
             <View style={styles.currencyHeaderRow}>
               <Text style={styles.fieldLabel}>{t.currency || 'Currency'}</Text>
               <View style={styles.liveRateBadgeRow}>
-                <MaterialCommunityIcons name={isLiveRates ? 'wifi' : 'wifi-off'} size={13} color={isLiveRates ? '#10B981' : theme.muted} />
-                <Text style={[styles.liveRateText, { color: isLiveRates ? '#10B981' : theme.muted }]}>
-                  {isLiveRates ? t.liveRatesActive || 'Live Rates' : t.offlineRatesActive || 'Offline Rates'}
+                <MaterialCommunityIcons
+                  name={useCustomRates ? 'pencil' : isLiveRates ? 'wifi' : 'wifi-off'}
+                  size={13}
+                  color={useCustomRates ? theme.primary : isLiveRates ? '#10B981' : theme.muted}
+                />
+                <Text
+                  style={[
+                    styles.liveRateText,
+                    { color: useCustomRates ? theme.primary : isLiveRates ? '#10B981' : theme.muted },
+                  ]}
+                >
+                  {useCustomRates
+                    ? t.customRatesActive || 'Custom Rates Mode'
+                    : isLiveRates
+                    ? t.liveRatesActive || 'Live Rates'
+                    : t.offlineRatesActive || 'Offline Rates'}
                 </Text>
               </View>
             </View>
@@ -228,42 +253,140 @@ export default function Settings({ navigation }: { navigation: any }) {
                     </Pressable>
                   </View>
                   <ScrollView style={styles.languageList}>
-                    {CURRENCY_OPTIONS.map((option) => (
-                      <Pressable
-                        key={option.code}
-                        onPress={() => handleCurrencyChange(option.code)}
-                        style={({ pressed }) => [
-                          styles.languageOption,
-                          {
-                            backgroundColor: currency.code === option.code ? theme.primary + '22' : 'transparent',
-                            borderColor: currency.code === option.code ? theme.primary : theme.border,
-                            opacity: pressed ? 0.8 : 1,
-                          },
-                        ]}
-                      >
-                        <View style={styles.currencyOptionBadgeRow}>
-                          <View style={[styles.currencySymbolBadge, { backgroundColor: currency.code === option.code ? theme.primary : theme.border + '40' }]}>
-                            <Text style={[styles.currencySymbolText, { color: currency.code === option.code ? '#FFFFFF' : theme.text }]}>{option.symbol}</Text>
-                          </View>
-                          <View style={styles.currencyOptionTextWrap}>
-                            <Text style={[styles.languageOptionText, { color: theme.text, fontWeight: currency.code === option.code ? '700' : '400' }]}>{option.label}</Text>
-                            {rates[option.code] ? (
-                              <Text style={[styles.currencyRatePreviewText, { color: theme.muted }]}>
-                                {tf('settings.ratePreview', { rate: rates[option.code]?.toFixed(2), code: option.code }) || `1 USD = ${rates[option.code]?.toFixed(2)} ${option.code}`}
+                    {CURRENCY_OPTIONS.map((option) => {
+                      const effRate = getEffectiveRate(option.code);
+                      const isCustom = useCustomRates && customRates[option.code] && customRates[option.code] > 0;
+                      return (
+                        <Pressable
+                          key={option.code}
+                          onPress={() => handleCurrencyChange(option.code)}
+                          style={({ pressed }) => [
+                            styles.languageOption,
+                            {
+                              backgroundColor: currency.code === option.code ? theme.primary + '22' : 'transparent',
+                              borderColor: currency.code === option.code ? theme.primary : theme.border,
+                              opacity: pressed ? 0.8 : 1,
+                            },
+                          ]}
+                        >
+                          <View style={styles.currencyOptionBadgeRow}>
+                            <View style={[styles.currencySymbolBadge, { backgroundColor: currency.code === option.code ? theme.primary : theme.border + '40' }]}>
+                              <Text style={[styles.currencySymbolText, { color: currency.code === option.code ? '#FFFFFF' : theme.text }]}>{option.symbol}</Text>
+                            </View>
+                            <View style={styles.currencyOptionTextWrap}>
+                              <Text style={[styles.languageOptionText, { color: theme.text, fontWeight: currency.code === option.code ? '700' : '400' }]}>{option.label}</Text>
+                              <Text style={[styles.currencyRatePreviewText, { color: isCustom ? theme.primary : theme.muted }]}>
+                                {`1 USD = ${effRate.toFixed(2)} ${option.code}${isCustom ? ' (Custom)' : ''}`}
                               </Text>
-                            ) : null}
+                            </View>
                           </View>
-                        </View>
-                        {currency.code === option.code ? (
-                          <MaterialCommunityIcons name="check-circle" size={20} color={theme.primary} />
-                        ) : null}
-                      </Pressable>
-                    ))}
+                          {currency.code === option.code ? (
+                            <MaterialCommunityIcons name="check-circle" size={20} color={theme.primary} />
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
                   </ScrollView>
                 </Pressable>
               </Pressable>
             </Modal>
           </View>
+
+          <View style={[styles.simpleRow, { borderTopColor: theme.border }]}>
+            <View style={styles.simpleText}>
+              <Text style={[styles.simpleLabel, { color: theme.text }]}>{t.useCustomRates || 'Custom Rates Mode'}</Text>
+              <Text style={[styles.simpleHelper, { color: theme.muted }]}>{t.useCustomRatesHelper || 'Enable manual override for currency exchange rates'}</Text>
+            </View>
+            <Switch
+              value={useCustomRates}
+              onValueChange={(val) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                void setUseCustomRates(val);
+              }}
+              color={theme.primary}
+              accessibilityLabel={t.useCustomRates}
+            />
+          </View>
+
+          {useCustomRates ? (
+            <View style={{ marginTop: spacing.md }}>
+              <Pressable
+                onPress={() => setCustomRatesModalOpen(true)}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.manageCustomBtn,
+                  {
+                    borderColor: theme.primary,
+                    backgroundColor: theme.primary + '12',
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}
+              >
+                <MaterialCommunityIcons name="currency-usd" size={18} color={theme.primary} />
+                <Text style={[styles.manageCustomBtnText, { color: theme.primary }]}>
+                  {t.manageCustomRates || 'Manage Custom Exchange Rates'}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
+
+          <Modal visible={customRatesModalOpen} transparent animationType="fade" onRequestClose={() => setCustomRatesModalOpen(false)}>
+            <Pressable style={styles.languageModalOverlay} onPress={() => setCustomRatesModalOpen(false)}>
+              <Pressable style={[styles.languageModalSheet, { backgroundColor: theme.surface, borderColor: theme.border, maxHeight: '80%' }]}>
+                <View style={styles.modalHeader}>
+                  <View>
+                    <Text style={[styles.languageModalTitle, { color: theme.text }]}>{t.customRateTitle || 'Set Custom Rates'}</Text>
+                    <Text style={[{ fontSize: 12, color: theme.muted, marginTop: 2 }]}>{t.customRateSubtitle || 'Override 1 USD exchange rate'}</Text>
+                  </View>
+                  <Pressable onPress={() => setCustomRatesModalOpen(false)} hitSlop={8}>
+                    <MaterialCommunityIcons name="close" size={20} color={theme.muted} />
+                  </Pressable>
+                </View>
+                <ScrollView style={styles.languageList}>
+                  {CURRENCY_OPTIONS.filter((c) => c.code !== 'USD').map((option) => {
+                    const currentCustom = customRates[option.code] ? String(customRates[option.code]) : '';
+                    return (
+                      <View key={option.code} style={[styles.customRateInputRow, { borderColor: theme.border }]}>
+                        <View style={styles.customRateLabelWrap}>
+                          <Text style={[styles.customRateCodeText, { color: theme.text }]}>{option.code} ({option.symbol})</Text>
+                          <Text style={[{ fontSize: 11, color: theme.muted }]}>{option.label}</Text>
+                        </View>
+                        <View style={styles.customRateInputWrap}>
+                          <Text style={[{ fontSize: 12, color: theme.muted }]}>1 USD =</Text>
+                          <TextInput
+                            dense
+                            mode="outlined"
+                            keyboardType="numeric"
+                            placeholder={String(rates[option.code] || FALLBACK_RATES[option.code] || '')}
+                            value={customRateInputs[option.code] ?? currentCustom}
+                            onChangeText={(text) => {
+                              setCustomRateInputs((prev) => ({ ...prev, [option.code]: text }));
+                            }}
+                            onBlur={() => {
+                              const val = parseFloat(customRateInputs[option.code] ?? '');
+                              if (!isNaN(val) && val > 0) {
+                                void setCustomRate(option.code, val);
+                                snackbar.info(`Set ${option.code} rate: 1 USD = ${val}`);
+                              } else if (customRateInputs[option.code] === '') {
+                                void setCustomRate(option.code, null);
+                              }
+                            }}
+                            style={styles.customRateTextInput}
+                          />
+                        </View>
+                      </View>
+                    );
+                  })}
+                </ScrollView>
+                <Pressable
+                  onPress={() => setCustomRatesModalOpen(false)}
+                  style={({ pressed }) => [styles.doneBtn, { backgroundColor: theme.primary, opacity: pressed ? 0.9 : 1 }]}
+                >
+                  <Text style={styles.doneBtnText}>{tCommon.confirm || 'Done'}</Text>
+                </Pressable>
+              </Pressable>
+            </Pressable>
+          </Modal>
           <View style={[styles.simpleRow, { borderTopColor: theme.border }]}>
             <View style={styles.simpleText}>
               <Text style={[styles.simpleLabel, { color: theme.text }]}>{t.simpleMode}</Text>
@@ -554,6 +677,57 @@ function createStyles(theme) {
     // label + helper on the left and the Switch on the right.
     // A 1px top border separates it visually from the language
     // picker above.
+    manageCustomBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.xs,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      minHeight: 40,
+    },
+    manageCustomBtnText: {
+      ...type.bodyStrong,
+      fontSize: 13,
+    },
+    customRateInputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: spacing.sm,
+      borderBottomWidth: 1,
+      gap: spacing.sm,
+    },
+    customRateLabelWrap: {
+      flex: 1,
+    },
+    customRateCodeText: {
+      ...type.bodyStrong,
+      fontSize: 14,
+    },
+    customRateInputWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    customRateTextInput: {
+      width: 90,
+      height: 40,
+      fontSize: 13,
+    },
+    doneBtn: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      marginTop: spacing.md,
+    },
+    doneBtnText: {
+      ...type.bodyStrong,
+      color: '#FFFFFF',
+    },
     simpleRow: {
       flexDirection: 'row',
       alignItems: 'center',

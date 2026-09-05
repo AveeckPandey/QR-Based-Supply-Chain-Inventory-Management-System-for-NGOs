@@ -4,6 +4,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const CURRENCY_KEY = "hopebox-currency";
 const RATES_KEY = "hopebox-exchange-rates";
 const RATES_TIME_KEY = "hopebox-rates-timestamp";
+const CUSTOM_RATES_KEY = "hopebox-custom-rates";
+const USE_CUSTOM_KEY = "hopebox-use-custom-rates";
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 Hours in ms
 
 export type CurrencyOption = {
@@ -51,6 +53,11 @@ type CurrencyContextValue = {
   currency: CurrencyOption;
   setCurrencyCode: (code: string) => Promise<void>;
   rates: Record<string, number>;
+  customRates: Record<string, number>;
+  useCustomRates: boolean;
+  setUseCustomRates: (enable: boolean) => Promise<void>;
+  setCustomRate: (code: string, rate: number | null) => Promise<void>;
+  getEffectiveRate: (code?: string) => number;
   convert: (usdAmount: number, targetCode?: string) => number;
   formatCurrency: (usdAmount: number, overrideCode?: string) => string;
   isLiveRates: boolean;
@@ -61,6 +68,11 @@ const CurrencyContext = createContext<CurrencyContextValue>({
   currency: CURRENCY_OPTIONS[0],
   setCurrencyCode: async () => {},
   rates: FALLBACK_RATES,
+  customRates: {},
+  useCustomRates: false,
+  setUseCustomRates: async () => {},
+  setCustomRate: async () => {},
+  getEffectiveRate: () => 1.0,
   convert: (usdAmount: number) => usdAmount,
   formatCurrency: (usdAmount: number) => `$${usdAmount.toFixed(2)}`,
   isLiveRates: false,
@@ -70,6 +82,8 @@ const CurrencyContext = createContext<CurrencyContextValue>({
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currencyCode, setCurrencyCodeState] = useState<string>("USD");
   const [rates, setRates] = useState<Record<string, number>>(FALLBACK_RATES);
+  const [customRates, setCustomRatesState] = useState<Record<string, number>>({});
+  const [useCustomRates, setUseCustomRatesState] = useState<boolean>(false);
   const [isLiveRates, setIsLiveRates] = useState<boolean>(false);
 
   const refreshRates = useCallback(async () => {
@@ -78,14 +92,12 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       const storedTime = await AsyncStorage.getItem(RATES_TIME_KEY);
       const now = Date.now();
 
-      // Use cache if fresh (< 24 hrs)
       if (storedRates && storedTime && now - Number(storedTime) < CACHE_TTL) {
         setRates(JSON.parse(storedRates));
         setIsLiveRates(true);
         return;
       }
 
-      // Fetch live rates from open.er-api.com
       const res = await fetch("https://open.er-api.com/v6/latest/USD");
       const data = await res.json();
 
@@ -116,6 +128,21 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       if (storedCode && CURRENCY_OPTIONS.some((c) => c.code === storedCode)) {
         setCurrencyCodeState(storedCode);
       }
+
+      const storedUseCustom = await AsyncStorage.getItem(USE_CUSTOM_KEY);
+      if (storedUseCustom !== null) {
+        setUseCustomRatesState(storedUseCustom === "true");
+      }
+
+      const storedCustom = await AsyncStorage.getItem(CUSTOM_RATES_KEY);
+      if (storedCustom) {
+        try {
+          setCustomRatesState(JSON.parse(storedCustom));
+        } catch (_e) {
+          setCustomRatesState({});
+        }
+      }
+
       await refreshRates();
     };
     void init();
@@ -127,18 +154,44 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem(CURRENCY_KEY, code);
   };
 
+  const setUseCustomRates = async (enable: boolean) => {
+    setUseCustomRatesState(enable);
+    await AsyncStorage.setItem(USE_CUSTOM_KEY, String(enable));
+  };
+
+  const setCustomRate = async (code: string, rate: number | null) => {
+    const updated = { ...customRates };
+    if (rate === null || rate <= 0 || isNaN(rate)) {
+      delete updated[code];
+    } else {
+      updated[code] = rate;
+    }
+    setCustomRatesState(updated);
+    await AsyncStorage.setItem(CUSTOM_RATES_KEY, JSON.stringify(updated));
+  };
+
   const currency = useMemo(
     () => CURRENCY_OPTIONS.find((c) => c.code === currencyCode) || CURRENCY_OPTIONS[0],
     [currencyCode]
   );
 
+  const getEffectiveRate = useCallback(
+    (targetCode?: string): number => {
+      const code = targetCode || currency.code;
+      if (useCustomRates && customRates[code] && customRates[code] > 0) {
+        return customRates[code];
+      }
+      return rates[code] ?? FALLBACK_RATES[code] ?? 1.0;
+    },
+    [currency.code, useCustomRates, customRates, rates]
+  );
+
   const convert = useCallback(
     (usdAmount: number, targetCode?: string): number => {
-      const code = targetCode || currency.code;
-      const rate = rates[code] ?? FALLBACK_RATES[code] ?? 1.0;
+      const rate = getEffectiveRate(targetCode);
       return (usdAmount || 0) * rate;
     },
-    [currency.code, rates]
+    [getEffectiveRate]
   );
 
   const formatCurrency = useCallback(
@@ -167,8 +220,34 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ currency, setCurrencyCode, rates, convert, formatCurrency, isLiveRates, refreshRates }),
-    [currency, setCurrencyCode, rates, convert, formatCurrency, isLiveRates, refreshRates]
+    () => ({
+      currency,
+      setCurrencyCode,
+      rates,
+      customRates,
+      useCustomRates,
+      setUseCustomRates,
+      setCustomRate,
+      getEffectiveRate,
+      convert,
+      formatCurrency,
+      isLiveRates,
+      refreshRates,
+    }),
+    [
+      currency,
+      setCurrencyCode,
+      rates,
+      customRates,
+      useCustomRates,
+      setUseCustomRates,
+      setCustomRate,
+      getEffectiveRate,
+      convert,
+      formatCurrency,
+      isLiveRates,
+      refreshRates,
+    ]
   );
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
