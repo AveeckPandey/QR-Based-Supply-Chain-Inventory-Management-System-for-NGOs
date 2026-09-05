@@ -9,7 +9,9 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { REGIONAL_RATION_PRESETS, type RegionPreset } from '../../services/rationPresets';
 import {
   calculateCookedOutputKg,
+  calculateCostPerMeal,
   calculateFoodRequiredKg,
+  calculateItemCost,
   calculateMeatProteinOffsetKg,
   calculatePeopleServedFromStock,
 } from '../../services/rationMath';
@@ -31,6 +33,7 @@ export type CustomDonorItem = {
   donatedKg: number;
   gramPerServing: number;
   isPerishable: boolean;
+  estimatedCostPerUnit?: number;
 };
 
 export default function RationCalculator({ navigation }) {
@@ -43,7 +46,7 @@ export default function RationCalculator({ navigation }) {
   const [calcMode, setCalcMode] = useState<'dry_ration' | 'hot_kitchen'>('dry_ration');
   const [selectedRegionId, setSelectedRegionId] = useState<string>('south_asia');
   const [peopleCountText, setPeopleCountText] = useState<string>('1000');
-  const [durationDaysText, setDurationDaysText] = useState<string>('7');
+  const [durationDaysText, setDurationDaysText] = useState<string>('1');
   const [wasteMarginPctText, setWasteMarginPctText] = useState<string>('5');
   const [freshMeatDonationKgText, setFreshMeatDonationKgText] = useState<string>('');
 
@@ -56,6 +59,7 @@ export default function RationCalculator({ navigation }) {
       donatedKg: 0,
       gramPerServing: 100,
       isPerishable: true,
+      estimatedCostPerUnit: 3.50,
     },
   ]);
 
@@ -92,6 +96,7 @@ export default function RationCalculator({ navigation }) {
 
       const cookedOutputKg = calculateCookedOutputKg(netRequiredKg, staple.yieldKey);
       const capacityPeople = calculatePeopleServedFromStock(netRequiredKg, gramPerServing, durationDays, wasteMargin);
+      const estimatedCost = calculateItemCost(netRequiredKg, staple.estimatedCostPerUnit || 1.0);
 
       return {
         ...staple,
@@ -101,6 +106,7 @@ export default function RationCalculator({ navigation }) {
         netRequiredKg,
         cookedOutputKg,
         capacityPeople,
+        estimatedCost,
       };
     });
   }, [region, calcMode, peopleCount, durationDays, wasteMargin, meatProteinOffsetKg]);
@@ -113,6 +119,7 @@ export default function RationCalculator({ navigation }) {
         const requiredKg = calculateFoodRequiredKg(peopleCount, item.gramPerServing, durationDays, wasteMargin);
         const netRequiredKg = Math.max(0, Number((requiredKg - item.donatedKg).toFixed(2)));
         const cookedOutputKg = calculateCookedOutputKg(netRequiredKg, item.category === 'meat_poultry' ? 'chicken' : 'vegetables');
+        const estimatedCost = calculateItemCost(netRequiredKg, item.estimatedCostPerUnit || 2.0);
 
         return {
           id: item.id,
@@ -125,11 +132,27 @@ export default function RationCalculator({ navigation }) {
           netRequiredKg,
           cookedOutputKg,
           isPerishable: item.isPerishable,
+          estimatedCost,
         };
       });
   }, [customDonorItems, peopleCount, durationDays, wasteMargin]);
 
   const allCalculations = useMemo(() => [...presetCalculations, ...customCalculations], [presetCalculations, customCalculations]);
+
+  // Financial Donor Sponsorship Quotation Metrics
+  const totalSponsorshipBudget = useMemo(() => {
+    return Number(allCalculations.reduce((acc, curr) => acc + (curr.estimatedCost || 0), 0).toFixed(2));
+  }, [allCalculations]);
+
+  const totalMeals = useMemo(() => peopleCount * durationDays, [peopleCount, durationDays]);
+
+  const costPerMeal = useMemo(() => {
+    return calculateCostPerMeal(totalSponsorshipBudget, totalMeals);
+  }, [totalSponsorshipBudget, totalMeals]);
+
+  const totalCookedFoodKg = useMemo(() => {
+    return Number(allCalculations.reduce((acc, curr) => acc + (curr.cookedOutputKg || 0), 0).toFixed(2));
+  }, [allCalculations]);
 
   const handleAddCustomItemSubmit = () => {
     if (!customItemName.trim()) {
@@ -144,6 +167,7 @@ export default function RationCalculator({ navigation }) {
       donatedKg: Number(customDonatedKgText) || 0,
       gramPerServing: Number(customGramPerServingText) || 50,
       isPerishable: customIsPerishable,
+      estimatedCostPerUnit: 1.50,
     };
 
     setCustomDonorItems((prev) => [...prev, newItem]);
@@ -172,26 +196,24 @@ export default function RationCalculator({ navigation }) {
       Mode: calcMode === 'dry_ration' ? 'Dry Ration' : 'Hot Kitchen',
       Commodity: c.name,
       Type: c.isCustom ? 'Custom Donor Item (+)' : 'Standard Preset',
-      Beneficiaries: peopleCount,
-      Days: durationDays,
+      TargetMeals: totalMeals,
       GramPerServing: `${c.gramPerServing}g`,
-      GrossRequiredKg: c.requiredKg,
-      NetProcurementKg: c.netRequiredKg,
-      CookedYieldKg: c.cookedOutputKg,
-      WasteMargin: `${wasteMargin * 100}%`,
-      DonorProteinOffsetKg: meatProteinOffsetKg,
+      GrossRequiredKgL: `${c.requiredKg} ${c.unit}`,
+      NetRequiredKgL: `${c.netRequiredKg} ${c.unit}`,
+      CookedOutputKg: `${c.cookedOutputKg} kg`,
+      EstCostUSD: `$${c.estimatedCost.toFixed(2)}`,
     }));
 
     try {
       if (format === 'csv') {
-        await exportToCSV(poRows, `Procurement-Order-${region.id}-${Date.now()}`);
-        snackbar.success('Procurement Order CSV Exported');
+        await exportToCSV(poRows, `Donor-Meal-Quotation-${region.id}-${Date.now()}`);
+        snackbar.success('Donor Meal Quotation CSV Exported');
       } else {
-        await exportToPDF(poRows, `Ration Procurement Order (${region.name})`, `procurement-order-${Date.now()}`);
-        snackbar.success('Procurement Order PDF Exported');
+        await exportToPDF(poRows, `Donor Meal Sponsorship Quotation (${peopleCount} Meals)`, `donor-quotation-${Date.now()}`);
+        snackbar.success('Donor Sponsorship PDF Exported');
       }
     } catch (_err) {
-      snackbar.error('Could not export procurement order');
+      snackbar.error('Could not export quotation');
     }
   };
 
@@ -202,9 +224,9 @@ export default function RationCalculator({ navigation }) {
         <View style={styles.contentWrap}>
           <FadeInUp delay={0}>
             <ScreenHeader
-              eyebrow="HUMANITARIAN LOGISTICS"
+              eyebrow="HUMANITARIAN LOGISTICS & SPONSORSHIP"
               title="Ration & Supplier Calculator"
-              subtitle="WFP / Sphere Standard formulas with yield multipliers and dynamic custom donor inflow offsets."
+              subtitle="Convert cash/meal donations into exact raw kg/Liters and generate financial quotes."
             />
           </FadeInUp>
 
@@ -304,10 +326,10 @@ export default function RationCalculator({ navigation }) {
           {/* Campaign Input Variables */}
           <FadeInUp delay={120}>
             <SurfaceCard padding={spacing.lg}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>2. Campaign Parameters</Text>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>2. Sponsor Target Parameters</Text>
               <View style={styles.inputsGrid}>
                 <View style={styles.inputWrap}>
-                  <Text style={[styles.fieldLabel, { color: theme.muted }]}>People / Beneficiaries (N)</Text>
+                  <Text style={[styles.fieldLabel, { color: theme.muted }]}>Donor Target Meals / Beneficiaries (N)</Text>
                   <TextInput
                     mode="outlined"
                     value={peopleCountText}
@@ -435,10 +457,47 @@ export default function RationCalculator({ navigation }) {
             </SurfaceCard>
           </FadeInUp>
 
+          {/* Donor Sponsorship Financial Quote Banner */}
+          <FadeInUp delay={180}>
+            <SurfaceCard padding={spacing.lg}>
+              <View style={styles.cardHeaderRow}>
+                <Text style={[styles.cardTitle, { color: theme.text }]}>4. Donor Financial Quote & Meal Yield</Text>
+                <MaterialCommunityIcons name="cash-check" size={22} color={theme.success} />
+              </View>
+
+              <View style={styles.quoteMetricsRow}>
+                <MetricTile
+                  label="Total Donor Sponsorship"
+                  value={`$${totalSponsorshipBudget.toLocaleString()}`}
+                  subtext={`Est. budget for ${totalMeals} meals`}
+                  icon="cash-multiple"
+                  variant="primary"
+                />
+                <MetricTile
+                  label="Cost Per Meal"
+                  value={`$${costPerMeal}`}
+                  subtext="Per person / meal"
+                  icon="currency-usd"
+                  variant="success"
+                />
+              </View>
+
+              <View style={[styles.cookedYieldSummaryBox, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }]}>
+                <MaterialCommunityIcons name="pot-steam" size={20} color={theme.primary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.cookedYieldTitle, { color: theme.text }]}>Cooked Food Output Yield</Text>
+                  <Text style={[styles.cookedYieldText, { color: theme.primary }]}>
+                    {totalCookedFoodKg.toLocaleString()} kg total cooked meal output produced from raw inventory.
+                  </Text>
+                </View>
+              </View>
+            </SurfaceCard>
+          </FadeInUp>
+
           {/* Calculated Procurement Requirements Summary */}
           <FadeInUp delay={200}>
             <SurfaceCard padding={spacing.lg}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>4. Required Procurement Summary</Text>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>5. Itemized Raw Commodity Requirements (kg / Liters)</Text>
               <View style={styles.calcGrid}>
                 {allCalculations.map((c) => (
                   <View key={c.id} style={[styles.calcCard, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }]}>
@@ -456,12 +515,12 @@ export default function RationCalculator({ navigation }) {
 
                     <View style={styles.calcMetricsRow}>
                       <View style={styles.calcMetric}>
-                        <Text style={[styles.metricSubLabel, { color: theme.muted }]}>Net Procurement</Text>
+                        <Text style={[styles.metricSubLabel, { color: theme.muted }]}>Required Raw Quantity</Text>
                         <Text style={[styles.metricVal, { color: theme.primary }]}>{c.netRequiredKg.toLocaleString()} {c.unit}</Text>
                       </View>
                       <View style={styles.calcMetric}>
-                        <Text style={[styles.metricSubLabel, { color: theme.muted }]}>Cooked Yield (Y)</Text>
-                        <Text style={[styles.metricVal, { color: theme.success }]}>{c.cookedOutputKg.toLocaleString()} {c.unit}</Text>
+                        <Text style={[styles.metricSubLabel, { color: theme.muted }]}>Est. Cost</Text>
+                        <Text style={[styles.metricVal, { color: theme.success }]}>${c.estimatedCost.toFixed(2)}</Text>
                       </View>
                     </View>
                   </View>
@@ -473,14 +532,14 @@ export default function RationCalculator({ navigation }) {
           {/* Exporter Actions */}
           <FadeInUp delay={240}>
             <SurfaceCard padding={spacing.lg}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>5. Export Purchase Order (PO)</Text>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>6. Export Donor Quotation & Procurement Order</Text>
               <View style={styles.exportRow}>
                 <Pressable
                   onPress={() => handleExportPO('csv')}
                   style={({ pressed }) => [styles.exportBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.85 }]}
                 >
                   <MaterialCommunityIcons name="file-document-outline" size={18} color={theme.primaryText} />
-                  <Text style={[styles.exportBtnText, { color: theme.primaryText }]}>Export Purchase Order (CSV)</Text>
+                  <Text style={[styles.exportBtnText, { color: theme.primaryText }]}>Export Donor Quote (CSV)</Text>
                 </Pressable>
 
                 <Pressable
@@ -488,7 +547,7 @@ export default function RationCalculator({ navigation }) {
                   style={({ pressed }) => [styles.exportBtn, { backgroundColor: theme.surfaceRaised, borderColor: theme.border, borderWidth: 1 }, pressed && { opacity: 0.85 }]}
                 >
                   <MaterialCommunityIcons name="file-pdf-box" size={18} color={theme.text} />
-                  <Text style={[styles.exportBtnText, { color: theme.text }]}>Export PO (PDF)</Text>
+                  <Text style={[styles.exportBtnText, { color: theme.text }]}>Export Donor Quote (PDF)</Text>
                 </Pressable>
               </View>
             </SurfaceCard>
@@ -658,6 +717,18 @@ function createStyles(theme) {
     },
     alertTitle: { ...type.bodyStrong, fontSize: 13, marginBottom: 2 },
     alertText: { ...type.caption, fontSize: 12, lineHeight: 16 },
+    quoteMetricsRow: { flexDirection: 'row', gap: spacing.md, marginVertical: spacing.sm },
+    cookedYieldSummaryBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      padding: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      marginTop: spacing.xs,
+    },
+    cookedYieldTitle: { ...type.bodyStrong, fontSize: 13 },
+    cookedYieldText: { ...type.caption, fontSize: 12, marginTop: 2 },
     calcGrid: { gap: spacing.md },
     calcCard: { padding: spacing.md, borderRadius: radius.md, borderWidth: 1 },
     calcHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: spacing.sm },

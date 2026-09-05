@@ -4,6 +4,7 @@
 // 2. People Served From Stock: Total Available (g) / (R * D * (1 + W))
 // 3. Raw to Cooked Kitchen Yield: Cooked Output = Raw Input * Y
 // 4. Perishable Meat / Custom Donation Substitution & Offset
+// 5. Financial Cost Quotation & Donor Sponsorship Budget
 
 export type SphereBenchmark = 'full_relief' | 'single_meal' | 'custom';
 
@@ -89,4 +90,22 @@ export function calculateMeatProteinOffsetKg(freshMeatKg: number): number {
   if (freshMeatKg <= 0) return 0;
   const cookedUsableMeat = freshMeatKg * 0.85;
   return Number((cookedUsableMeat * 0.70).toFixed(2));
+}
+
+/**
+ * Calculate Commodity Cost & Financial Sponsorship Budget
+ * Total Cost = Quantity (kg/L) * Cost per Unit ($ or local currency)
+ */
+export function calculateItemCost(quantityKgOrL: number, costPerUnit: number = 0): number {
+  if (quantityKgOrL <= 0 || costPerUnit <= 0) return 0;
+  return Number((quantityKgOrL * costPerUnit).toFixed(2));
+}
+
+/**
+ * Calculate Cost Per Meal
+ * Cost Per Meal = Total Budget / Total Meals
+ */
+export function calculateCostPerMeal(totalBudget: number, totalMeals: number): number {
+  if (totalBudget <= 0 || totalMeals <= 0) return 0;
+  return Number((totalBudget / totalMeals).toFixed(2));
 }
