@@ -382,9 +382,9 @@ export default function Dashboard({ navigation }) {
               <View style={[styles.alertCard, { backgroundColor: theme.warningSoft || 'rgba(251,191,36,0.12)', borderColor: theme.warning }]}>
                 <MaterialCommunityIcons name="alert-outline" size={22} color={theme.warning} style={styles.alertIcon} />
                 <View style={styles.alertTextWrap}>
-                  <Text style={[styles.alertTitle, { color: theme.warning }]}>Low Stock Alert</Text>
+                  <Text style={[styles.alertTitle, { color: theme.warning }]}>{t.lowStockAlert || 'Low Stock Alert'}</Text>
                   <Text style={[styles.alertBody, { color: theme.text }]}>
-                    {chartData.filter((c) => c.shortage > 0).map((c) => `${c.label} is below target`).join(', ')}. Consider restocking before the next deployment campaign.
+                    {chartData.filter((c) => c.shortage > 0).map((c) => `${c.label}`).join(', ')} {t.lowStockMsg || 'is below target. Consider restocking before the next deployment campaign.'}
                   </Text>
                 </View>
               </View>
@@ -394,23 +394,23 @@ export default function Dashboard({ navigation }) {
           {/* Campaign Readiness Card */}
           <FadeInUp delay={80}>
             <SurfaceCard padding={spacing.lg}>
-              <Text style={[styles.cardSectionEyebrow, { color: theme.muted }]}>CAMPAIGN READINESS</Text>
+              <Text style={[styles.cardSectionEyebrow, { color: theme.muted }]}>{t.campaignReadiness || 'CAMPAIGN READINESS'}</Text>
               <View style={styles.readinessStatRow}>
                 <View style={[styles.readinessStatBox, { backgroundColor: theme.backgroundAlt }]}>
-                  <Text style={[styles.readinessStatLabel, { color: theme.muted }]}>Possible Boxes</Text>
+                  <Text style={[styles.readinessStatLabel, { color: theme.muted }]}>{t.possibleBoxes || 'Possible Boxes'}</Text>
                   <Text style={[styles.readinessStatNum, { color: theme.text }]}>{possibleBoxes}</Text>
-                  <Text style={[styles.readinessStatSub, { color: theme.muted }]}>Based on stock</Text>
+                  <Text style={[styles.readinessStatSub, { color: theme.muted }]}>{t.basedOnStock || 'Based on stock'}</Text>
                 </View>
                 <View style={[styles.readinessStatBox, { backgroundColor: theme.backgroundAlt }]}>
-                  <Text style={[styles.readinessStatLabel, { color: theme.muted }]}>Deployed</Text>
+                  <Text style={[styles.readinessStatLabel, { color: theme.muted }]}>{t.deployed || 'Deployed'}</Text>
                   <Text style={[styles.readinessStatNum, { color: theme.success }]}>{counts.dispatched}</Text>
-                  <Text style={[styles.readinessStatSub, { color: theme.muted }]}>This campaign</Text>
+                  <Text style={[styles.readinessStatSub, { color: theme.muted }]}>{t.thisCampaign || 'This campaign'}</Text>
                 </View>
               </View>
 
               <View style={styles.targetProgressBlock}>
                 <View style={styles.targetProgressHeader}>
-                  <Text style={[styles.targetProgressTitle, { color: theme.text }]}>Target coverage</Text>
+                  <Text style={[styles.targetProgressTitle, { color: theme.text }]}>{t.targetCoverage || 'Target coverage'}</Text>
                   <Text style={[styles.targetProgressPercent, { color: theme.warning }]}>
                     {Math.round(completionRate)}% <Text style={[styles.targetProgressSubText, { color: theme.muted }]}>({possibleBoxes} of {targetNum || 100} HH)</Text>
                   </Text>
@@ -430,14 +430,14 @@ export default function Dashboard({ navigation }) {
           {/* Live Inventory Status Bars */}
           <FadeInUp delay={140}>
             <SurfaceCard padding={spacing.lg}>
-              <Text style={[styles.cardSectionEyebrow, { color: theme.muted }]}>LIVE INVENTORY</Text>
+              <Text style={[styles.cardSectionEyebrow, { color: theme.muted }]}>{t.liveInventory || 'LIVE INVENTORY'}</Text>
               {chartData.length === 0 ? (
                 <Text style={[styles.empty, { color: theme.muted }]}>{t.emptyChart}</Text>
               ) : (
                 <View style={styles.inventoryList}>
                   {chartData.map((item) => {
                     const statusColor = item.shortage > 0 ? (theme.warning || '#FBBF24') : (theme.success || '#10B981');
-                    const statusLabel = item.shortage > 0 ? '↓ low' : 'healthy';
+                    const statusLabel = item.shortage > 0 ? `↓ ${t.low || 'low'}` : (t.healthy || 'healthy');
                     return (
                       <View key={item.id} style={styles.inventoryRow}>
                         <View style={styles.inventoryHeader}>
@@ -467,15 +467,15 @@ export default function Dashboard({ navigation }) {
                   <View style={styles.legendRow}>
                     <View style={styles.legendItem}>
                       <View style={[styles.legendDot, { backgroundColor: theme.warning || '#FBBF24' }]} />
-                      <Text style={[styles.legendText, { color: theme.muted }]}>Low (&lt;50%)</Text>
+                      <Text style={[styles.legendText, { color: theme.muted }]}>{t.low || 'Low'} (&lt;50%)</Text>
                     </View>
                     <View style={styles.legendItem}>
                       <View style={[styles.legendDot, { backgroundColor: theme.success || '#10B981' }]} />
-                      <Text style={[styles.legendText, { color: theme.muted }]}>Healthy</Text>
+                      <Text style={[styles.legendText, { color: theme.muted }]}>{t.healthy || 'Healthy'}</Text>
                     </View>
                     <View style={styles.legendItem}>
                       <View style={[styles.legendDot, { backgroundColor: theme.primary }]} />
-                      <Text style={[styles.legendText, { color: theme.muted }]}>Tracked</Text>
+                      <Text style={[styles.legendText, { color: theme.muted }]}>{t.tracked || 'Tracked'}</Text>
                     </View>
                   </View>
                 </View>
@@ -486,46 +486,46 @@ export default function Dashboard({ navigation }) {
           {/* Quick Actions Grid */}
           <FadeInUp delay={200}>
             <SurfaceCard padding={spacing.lg}>
-              <Text style={[styles.cardSectionEyebrow, { color: theme.muted }]}>QUICK ACTIONS</Text>
+              <Text style={[styles.cardSectionEyebrow, { color: theme.muted }]}>{t.quickActions || 'QUICK ACTIONS'}</Text>
               <View style={styles.quickGrid2x2}>
                 <Pressable
                   onPress={goRationCalc}
                   accessibilityRole="button"
-                  accessibilityLabel="Ration calculator"
+                  accessibilityLabel={t.rationCalc || 'Ration Calculator'}
                   style={({ pressed }) => [styles.quickTile, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }, pressed && { opacity: 0.8 }]}
                 >
                   <MaterialCommunityIcons name="calculator-variant-outline" size={26} color={theme.primary} />
-                  <Text style={[styles.quickTileText, { color: theme.text }]}>Ration Calculator</Text>
+                  <Text style={[styles.quickTileText, { color: theme.text }]}>{t.rationCalc || 'Ration Calculator'}</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={goBoxes}
                   accessibilityRole="button"
-                  accessibilityLabel="Manage boxes"
+                  accessibilityLabel={t.manageBoxes || 'Manage boxes'}
                   style={({ pressed }) => [styles.quickTile, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }, pressed && { opacity: 0.8 }]}
                 >
                   <MaterialCommunityIcons name="package-variant-closed" size={26} color={theme.primary} />
-                  <Text style={[styles.quickTileText, { color: theme.text }]}>Manage boxes</Text>
+                  <Text style={[styles.quickTileText, { color: theme.text }]}>{t.manageBoxes || 'Manage boxes'}</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={goScan}
                   accessibilityRole="button"
-                  accessibilityLabel="Scan box"
+                  accessibilityLabel={t.scanBox || 'Scan box'}
                   style={({ pressed }) => [styles.quickTile, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }, pressed && { opacity: 0.8 }]}
                 >
                   <MaterialCommunityIcons name="qrcode-scan" size={26} color={theme.primary} />
-                  <Text style={[styles.quickTileText, { color: theme.text }]}>Scan box</Text>
+                  <Text style={[styles.quickTileText, { color: theme.text }]}>{t.scanBox || 'Scan box'}</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={goAnalytics}
                   accessibilityRole="button"
-                  accessibilityLabel="Analytics"
+                  accessibilityLabel={t.analytics || 'Analytics'}
                   style={({ pressed }) => [styles.quickTile, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }, pressed && { opacity: 0.8 }]}
                 >
                   <MaterialCommunityIcons name="chart-bar" size={26} color={theme.primary} />
-                  <Text style={[styles.quickTileText, { color: theme.text }]}>Analytics</Text>
+                  <Text style={[styles.quickTileText, { color: theme.text }]}>{t.analytics || 'Analytics'}</Text>
                 </Pressable>
               </View>
             </SurfaceCard>

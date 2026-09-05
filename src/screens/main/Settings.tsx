@@ -117,7 +117,7 @@ export default function Settings({ navigation }: { navigation: any }) {
                       { color: brandPreset === opt.key ? theme.primary : theme.text, fontWeight: brandPreset === opt.key ? '700' : '500' },
                     ]}
                   >
-                    {opt.key === 'orange' ? 'Orange' : opt.key === 'emerald' ? 'Emerald' : 'Cobalt'}
+                    {opt.label}
                   </Text>
                   {brandPreset === opt.key ? (
                     <MaterialCommunityIcons name="check" size={16} color={theme.primary} />

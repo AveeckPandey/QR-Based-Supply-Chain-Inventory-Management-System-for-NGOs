@@ -40,6 +40,7 @@ export default function RationCalculator({ navigation }) {
   const { theme } = useAppTheme();
   const { currentWarehouse } = useWarehouse();
   const { t: tAll } = useLanguage();
+  const tCalc = tAll('rationCalc') || {};
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Mode: 'dry_ration' (Boxes/Kits) vs 'hot_kitchen' (Cooked Cauldrons)
@@ -224,9 +225,9 @@ export default function RationCalculator({ navigation }) {
         <View style={styles.contentWrap}>
           <FadeInUp delay={0}>
             <ScreenHeader
-              eyebrow="HUMANITARIAN LOGISTICS & SPONSORSHIP"
-              title="Ration & Supplier Calculator"
-              subtitle="Convert cash/meal donations into exact raw kg/Liters and generate financial quotes."
+              eyebrow={tCalc.eyebrow || "HUMANITARIAN LOGISTICS & SPONSORSHIP"}
+              title={tCalc.title || "Ration & Supplier Calculator"}
+              subtitle={tCalc.subtitle || "Convert cash/meal donations into exact raw kg/Liters and generate financial quotes."}
             />
           </FadeInUp>
 
@@ -255,7 +256,7 @@ export default function RationCalculator({ navigation }) {
                     { color: calcMode === 'dry_ration' ? theme.primaryText : theme.text },
                   ]}
                 >
-                  Dry Rations (2,100 kcal)
+                  {tCalc.dryRation || "Dry Rations (2,100 kcal)"}
                 </Text>
               </Pressable>
 
@@ -281,7 +282,7 @@ export default function RationCalculator({ navigation }) {
                     { color: calcMode === 'hot_kitchen' ? theme.primaryText : theme.text },
                   ]}
                 >
-                  Hot Kitchen (700 kcal)
+                  {tCalc.hotKitchen || "Hot Kitchen (700 kcal)"}
                 </Text>
               </Pressable>
             </View>
@@ -290,10 +291,11 @@ export default function RationCalculator({ navigation }) {
           {/* Region Preset Selector */}
           <FadeInUp delay={80}>
             <SurfaceCard padding={spacing.lg}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>1. Select Target Region & Meals</Text>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>{tCalc.selectRegion || "1. Select Target Region & Meals"}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.regionScroll}>
                 {REGIONAL_RATION_PRESETS.map((r) => {
                   const selected = r.id === selectedRegionId;
+                  const regionName = tCalc[r.id] || r.name;
                   return (
                     <Pressable
                       key={r.id}
@@ -309,7 +311,7 @@ export default function RationCalculator({ navigation }) {
                         },
                       ]}
                     >
-                      <Text style={[styles.regionChipName, { color: selected ? theme.primary : theme.text }]}>{r.name}</Text>
+                      <Text style={[styles.regionChipName, { color: selected ? theme.primary : theme.text }]}>{regionName}</Text>
                     </Pressable>
                   );
                 })}
@@ -317,7 +319,7 @@ export default function RationCalculator({ navigation }) {
 
               <View style={[styles.regionInfoBox, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }]}>
                 <Text style={[styles.regionSubtext, { color: theme.muted }]}>{region.subregionText}</Text>
-                <Text style={[styles.typicalMealsLabel, { color: theme.text }]}>Typical NGO Meals Served:</Text>
+                <Text style={[styles.typicalMealsLabel, { color: theme.text }]}>{tCalc.typicalMealsServed || "Typical NGO Meals Served:"}</Text>
                 <Text style={[styles.typicalMealsText, { color: theme.primary }]}>{region.typicalMeals.join(' · ')}</Text>
               </View>
             </SurfaceCard>
@@ -326,10 +328,10 @@ export default function RationCalculator({ navigation }) {
           {/* Campaign Input Variables */}
           <FadeInUp delay={120}>
             <SurfaceCard padding={spacing.lg}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>2. Sponsor Target Parameters</Text>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>{tCalc.targetParameters || "2. Sponsor Target Parameters"}</Text>
               <View style={styles.inputsGrid}>
                 <View style={styles.inputWrap}>
-                  <Text style={[styles.fieldLabel, { color: theme.muted }]}>Donor Target Meals / Beneficiaries (N)</Text>
+                  <Text style={[styles.fieldLabel, { color: theme.muted }]}>{tCalc.targetMealsLabel || "Donor Target Meals / Beneficiaries (N)"}</Text>
                   <TextInput
                     mode="outlined"
                     value={peopleCountText}
@@ -343,7 +345,7 @@ export default function RationCalculator({ navigation }) {
                 </View>
 
                 <View style={styles.inputWrap}>
-                  <Text style={[styles.fieldLabel, { color: theme.muted }]}>Duration (Days / Meals)</Text>
+                  <Text style={[styles.fieldLabel, { color: theme.muted }]}>{tCalc.durationLabel || "Duration (Days / Meals)"}</Text>
                   <TextInput
                     mode="outlined"
                     value={durationDaysText}
@@ -357,7 +359,7 @@ export default function RationCalculator({ navigation }) {
                 </View>
 
                 <View style={styles.inputWrapFull}>
-                  <Text style={[styles.fieldLabel, { color: theme.muted }]}>Waste & Spoilage Margin (%)</Text>
+                  <Text style={[styles.fieldLabel, { color: theme.muted }]}>{tCalc.wasteMarginLabel || "Waste & Spoilage Margin (%)"}</Text>
                   <TextInput
                     mode="outlined"
                     value={wasteMarginPctText}
@@ -378,9 +380,9 @@ export default function RationCalculator({ navigation }) {
             <SurfaceCard padding={spacing.lg}>
               <View style={styles.cardHeaderRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.cardTitle, { color: theme.text }]}>3. Custom Donor Inflow (+)</Text>
+                  <Text style={[styles.cardTitle, { color: theme.text }]}>{tCalc.customDonorInflow || "3. Custom Donor Inflow (+)"}</Text>
                   <Text style={[styles.fieldHelper, { color: theme.muted }]}>
-                    Add unexpected donor items (e.g. Fresh Chicken, Mutton, Eggs, Milk Powder, Produce). Offsets dry pulses & flags perishable priority.
+                    {tCalc.customDonorHelper || "Add unexpected donor items (e.g. Fresh Chicken, Mutton, Eggs, Milk Powder, Produce). Offsets dry pulses & flags perishable priority."}
                   </Text>
                 </View>
                 <Pressable
@@ -395,7 +397,7 @@ export default function RationCalculator({ navigation }) {
                   ]}
                 >
                   <MaterialCommunityIcons name="plus" size={18} color={theme.primaryText} />
-                  <Text style={[styles.addCustomBtnText, { color: theme.primaryText }]}>Add Item</Text>
+                  <Text style={[styles.addCustomBtnText, { color: theme.primaryText }]}>{tCalc.addItem || "Add Item"}</Text>
                 </Pressable>
               </View>
 
@@ -403,7 +405,7 @@ export default function RationCalculator({ navigation }) {
               <View style={{ marginTop: spacing.xs }}>
                 <TextInput
                   mode="outlined"
-                  label="Fresh Chicken / Mutton Donation (kg)"
+                  label={tCalc.freshMeatDonationLabel || "Fresh Chicken / Mutton Donation (kg)"}
                   value={freshMeatDonationKgText}
                   onChangeText={(t) => setFreshMeatDonationKgText(t.replace(/[^0-9.]/g, ''))}
                   keyboardType="numeric"
@@ -424,12 +426,12 @@ export default function RationCalculator({ navigation }) {
                           <Text style={[styles.customItemName, { color: theme.text }]}>{item.name}</Text>
                           {item.isPerishable ? (
                             <View style={[styles.badgePerishable, { backgroundColor: theme.warningSoft || 'rgba(251,191,36,0.14)' }]}>
-                              <Text style={[styles.badgeText, { color: theme.warning }]}>Perishable (48h)</Text>
+                              <Text style={[styles.badgeText, { color: theme.warning }]}>{tCalc.perishable48h || "Perishable (48h)"}</Text>
                             </View>
                           ) : null}
                         </View>
                         <Text style={[styles.customItemSub, { color: theme.muted }]}>
-                          Donated: {item.donatedKg > 0 ? `${item.donatedKg} kg` : '0 kg'} · Serving: {item.gramPerServing}g / person
+                          {tCalc.donated || "Donated"}: {item.donatedKg > 0 ? `${item.donatedKg} kg` : '0 kg'} · {tCalc.serving || "Serving"}: {item.gramPerServing}g / person
                         </Text>
                       </View>
 
@@ -447,9 +449,9 @@ export default function RationCalculator({ navigation }) {
                 <View style={[styles.perishableAlert, { backgroundColor: theme.warningSoft || 'rgba(251,191,36,0.14)', borderColor: theme.warning }]}>
                   <MaterialCommunityIcons name="clock-alert-outline" size={20} color={theme.warning} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.alertTitle, { color: theme.warning }]}>🚨 48-Hour Dispatch Priority Alert</Text>
+                    <Text style={[styles.alertTitle, { color: theme.warning }]}>{tCalc.dispatchAlertTitle || "🚨 48-Hour Dispatch Priority Alert"}</Text>
                     <Text style={[styles.alertText, { color: theme.text }]}>
-                      {freshMeatKg} kg Fresh Produce/Meat offsets {meatProteinOffsetKg} kg dry pulse procurement! Dispatch within 48 hours to prevent spoilage.
+                      {freshMeatKg} kg Fresh Produce/Meat {tCalc.dispatchAlertMsg ? tCalc.dispatchAlertMsg.replace('{{meatProteinOffsetKg}}', String(meatProteinOffsetKg)) : `offsets ${meatProteinOffsetKg} kg dry pulse procurement! Dispatch within 48 hours to prevent spoilage.`}
                     </Text>
                   </View>
                 </View>
@@ -461,22 +463,22 @@ export default function RationCalculator({ navigation }) {
           <FadeInUp delay={180}>
             <SurfaceCard padding={spacing.lg}>
               <View style={styles.cardHeaderRow}>
-                <Text style={[styles.cardTitle, { color: theme.text }]}>4. Donor Financial Quote & Meal Yield</Text>
+                <Text style={[styles.cardTitle, { color: theme.text }]}>{tCalc.financialQuoteTitle || "4. Donor Financial Quote & Meal Yield"}</Text>
                 <MaterialCommunityIcons name="cash-check" size={22} color={theme.success} />
               </View>
 
               <View style={styles.quoteMetricsRow}>
                 <MetricTile
-                  label="Total Donor Sponsorship"
+                  label={tCalc.totalSponsorship || "Total Donor Sponsorship"}
                   value={`$${totalSponsorshipBudget.toLocaleString()}`}
-                  subtext={`Est. budget for ${totalMeals} meals`}
+                  subtext={tCalc.estBudgetFor ? tCalc.estBudgetFor.replace('{{totalMeals}}', String(totalMeals)) : `Est. budget for ${totalMeals} meals`}
                   icon="cash-multiple"
                   variant="primary"
                 />
                 <MetricTile
-                  label="Cost Per Meal"
+                  label={tCalc.costPerMeal || "Cost Per Meal"}
                   value={`$${costPerMeal}`}
-                  subtext="Per person / meal"
+                  subtext={tCalc.perPersonMeal || "Per person / meal"}
                   icon="currency-usd"
                   variant="success"
                 />
@@ -485,9 +487,9 @@ export default function RationCalculator({ navigation }) {
               <View style={[styles.cookedYieldSummaryBox, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }]}>
                 <MaterialCommunityIcons name="pot-steam" size={20} color={theme.primary} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.cookedYieldTitle, { color: theme.text }]}>Cooked Food Output Yield</Text>
+                  <Text style={[styles.cookedYieldTitle, { color: theme.text }]}>{tCalc.cookedFoodOutput || "Cooked Food Output Yield"}</Text>
                   <Text style={[styles.cookedYieldText, { color: theme.primary }]}>
-                    {totalCookedFoodKg.toLocaleString()} kg total cooked meal output produced from raw inventory.
+                    {totalCookedFoodKg.toLocaleString()} kg {tCalc.cookedMealMsg || "total cooked meal output produced from raw inventory."}
                   </Text>
                 </View>
               </View>
@@ -497,7 +499,7 @@ export default function RationCalculator({ navigation }) {
           {/* Calculated Procurement Requirements Summary */}
           <FadeInUp delay={200}>
             <SurfaceCard padding={spacing.lg}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>5. Itemized Raw Commodity Requirements (kg / Liters)</Text>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>{tCalc.itemizedRequirements || "5. Itemized Raw Commodity Requirements (kg / Liters)"}</Text>
               <View style={styles.calcGrid}>
                 {allCalculations.map((c) => (
                   <View key={c.id} style={[styles.calcCard, { backgroundColor: theme.backgroundAlt, borderColor: theme.border }]}>
@@ -506,20 +508,20 @@ export default function RationCalculator({ navigation }) {
                         <Text style={[styles.calcName, { color: theme.text }]}>{c.name}</Text>
                         {c.isCustom ? (
                           <View style={[styles.customBadge, { backgroundColor: theme.primarySoft }]}>
-                            <Text style={[styles.customBadgeText, { color: theme.primary }]}>Custom (+)</Text>
+                            <Text style={[styles.customBadgeText, { color: theme.primary }]}>{tCalc.customTag || "Custom (+)"}</Text>
                           </View>
                         ) : null}
                       </View>
-                      <Text style={[styles.calcRate, { color: theme.muted }]}>{c.gramPerServing}g / serving</Text>
+                      <Text style={[styles.calcRate, { color: theme.muted }]}>{c.gramPerServing}g{tCalc.perServing || " / serving"}</Text>
                     </View>
 
                     <View style={styles.calcMetricsRow}>
                       <View style={styles.calcMetric}>
-                        <Text style={[styles.metricSubLabel, { color: theme.muted }]}>Required Raw Quantity</Text>
+                        <Text style={[styles.metricSubLabel, { color: theme.muted }]}>{tCalc.requiredRawQuantity || "Required Raw Quantity"}</Text>
                         <Text style={[styles.metricVal, { color: theme.primary }]}>{c.netRequiredKg.toLocaleString()} {c.unit}</Text>
                       </View>
                       <View style={styles.calcMetric}>
-                        <Text style={[styles.metricSubLabel, { color: theme.muted }]}>Est. Cost</Text>
+                        <Text style={[styles.metricSubLabel, { color: theme.muted }]}>{tCalc.estCost || "Est. Cost"}</Text>
                         <Text style={[styles.metricVal, { color: theme.success }]}>${c.estimatedCost.toFixed(2)}</Text>
                       </View>
                     </View>
@@ -532,14 +534,14 @@ export default function RationCalculator({ navigation }) {
           {/* Exporter Actions */}
           <FadeInUp delay={240}>
             <SurfaceCard padding={spacing.lg}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>6. Export Donor Quotation & Procurement Order</Text>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>{tCalc.exportQuotationTitle || "6. Export Donor Quotation & Procurement Order"}</Text>
               <View style={styles.exportRow}>
                 <Pressable
                   onPress={() => handleExportPO('csv')}
                   style={({ pressed }) => [styles.exportBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.85 }]}
                 >
                   <MaterialCommunityIcons name="file-document-outline" size={18} color={theme.primaryText} />
-                  <Text style={[styles.exportBtnText, { color: theme.primaryText }]}>Export Donor Quote (CSV)</Text>
+                  <Text style={[styles.exportBtnText, { color: theme.primaryText }]}>{tCalc.exportCsv || "Export Donor Quote (CSV)"}</Text>
                 </Pressable>
 
                 <Pressable
@@ -547,7 +549,7 @@ export default function RationCalculator({ navigation }) {
                   style={({ pressed }) => [styles.exportBtn, { backgroundColor: theme.surfaceRaised, borderColor: theme.border, borderWidth: 1 }, pressed && { opacity: 0.85 }]}
                 >
                   <MaterialCommunityIcons name="file-pdf-box" size={18} color={theme.text} />
-                  <Text style={[styles.exportBtnText, { color: theme.text }]}>Export Donor Quote (PDF)</Text>
+                  <Text style={[styles.exportBtnText, { color: theme.text }]}>{tCalc.exportPdf || "Export Donor Quote (PDF)"}</Text>
                 </Pressable>
               </View>
             </SurfaceCard>
@@ -560,7 +562,7 @@ export default function RationCalculator({ navigation }) {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.text }]}>+ Add Custom Donor / Ration Item</Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>{tCalc.addCustomTitle || "+ Add Custom Donor / Ration Item"}</Text>
               <Pressable onPress={() => setIsAddModalOpen(false)}>
                 <MaterialCommunityIcons name="close" size={22} color={theme.text} />
               </Pressable>
@@ -569,7 +571,7 @@ export default function RationCalculator({ navigation }) {
             <ScrollView contentContainerStyle={{ gap: spacing.md }}>
               <TextInput
                 mode="outlined"
-                label="Item Name (e.g. Fresh Chicken, Milk Powder, Eggs)"
+                label={tCalc.itemNamePlaceholder || "Item Name (e.g. Fresh Chicken, Milk Powder, Eggs)"}
                 value={customItemName}
                 onChangeText={setCustomItemName}
                 style={styles.textInput}
@@ -580,7 +582,7 @@ export default function RationCalculator({ navigation }) {
 
               <TextInput
                 mode="outlined"
-                label="Donated Quantity Received (kg)"
+                label={tCalc.donatedQtyLabel || "Donated Quantity Received (kg)"}
                 value={customDonatedKgText}
                 onChangeText={(t) => setCustomDonatedKgText(t.replace(/[^0-9.]/g, ''))}
                 keyboardType="numeric"
@@ -592,7 +594,7 @@ export default function RationCalculator({ navigation }) {
 
               <TextInput
                 mode="outlined"
-                label="Portion per Serving (grams)"
+                label={tCalc.portionServingLabel || "Portion per Serving (grams)"}
                 value={customGramPerServingText}
                 onChangeText={(t) => setCustomGramPerServingText(t.replace(/[^0-9]/g, ''))}
                 keyboardType="numeric"
@@ -615,7 +617,7 @@ export default function RationCalculator({ navigation }) {
                   color={customIsPerishable ? theme.warning : theme.muted}
                 />
                 <Text style={[styles.checkboxText, { color: theme.text }]}>
-                  Perishable Priority Item (Triggers 48h dispatch warning)
+                  {tCalc.perishableLabel || "Perishable Priority Item (Triggers 48h dispatch warning)"}
                 </Text>
               </Pressable>
 
@@ -623,7 +625,7 @@ export default function RationCalculator({ navigation }) {
                 onPress={handleAddCustomItemSubmit}
                 style={({ pressed }) => [styles.submitBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.85 }]}
               >
-                <Text style={[styles.submitBtnText, { color: theme.primaryText }]}>Save Custom Donor Item</Text>
+                <Text style={[styles.submitBtnText, { color: theme.primaryText }]}>{tCalc.saveCustomItem || "Save Custom Donor Item"}</Text>
               </Pressable>
             </ScrollView>
           </View>
